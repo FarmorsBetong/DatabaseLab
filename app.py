@@ -17,7 +17,8 @@ def createTables():  #<-- bättre att ha ne funktion för att göra tables //Joh
     cur = mysql.connect().cursor()
     cur.execute('''CREATE TABLE IF NOT EXISTS users(
         userID INT UNSIGNED AUTO_INCREMENT NOT NULL,
-        name VARCHAR(100) NOT NULL,
+        firstname VARCHAR(100) NOT NULL,
+        surname VARCHAR(100) NOT NULL,
         email VARCHAR(100) NOT NULL,
         password VARCHAR(100) NOT NULL,
         role VARCHAR(10) NOT NULL,
@@ -41,10 +42,11 @@ def createTables():  #<-- bättre att ha ne funktion för att göra tables //Joh
         FOREIGN KEY(userID) REFERENCES users(userID)
         )''')
             
-    cur.execute('''CREATE TABLE IF NOT EXISTS conveyor_belt(
+    cur.execute('''CREATE TABLE IF NOT EXISTS booked_items(
         order_number INT UNSIGNED NOT NULL,
         article_number INT UNSIGNED NOT NULL,
-        FOREIGN KEY(order_number) REFERENCES orders(order_number),
+        amount INT UNSIGNED NOT NULL,
+        FOREIGN KEY(order_number) REFERENCES orders(order_number) ON DELETE CASCADE,
         FOREIGN KEY(article_number) REFERENCES article(article_number)
         )''')
             
@@ -56,7 +58,7 @@ def createTables():  #<-- bättre att ha ne funktion för att göra tables //Joh
         FOREIGN KEY(order_number) REFERENCES users(userID),
         FOREIGN KEY(article_number) REFERENCES article(article_number)
         )''')
-    
+    cur.close()
     return
 
 @app.route('/', methods = ['GET', 'POST'])
@@ -92,17 +94,49 @@ def admin():
 
 @app.route('/login', methods = ['GET', 'POST']) 
 def login():
-    if(request.method == "POST"):
-        
+    if(request.method == 'POST'):
+        email = request.form["email"]
+        pwd = request.form["pwd"]
+
+        #search for the email in the database
+        cur = conn.cursor()
+        query = "SELECT email FROM users WHERE email='" + email +"'"
+        cur.execute(query)
+        conn.commit()
+        rv = str(cur.fetchone())
+        return rv
 
     return render_template('login.html')
 
 @app.route('/register', methods = ['GET', 'POST']) 
-def registerMet():
-    if(request.method == "POST"):
+def register():
+    if(request.method == 'POST'):
+        name = request.form["name"]
+        surname = request.form["surname"]
+        email = request.form["Email_input"]
+        password = request.form["Pass_input"]
+        password2 = request.form["Pass_input2"]
         
-
+        
+        if(password == password2):  
+            cur = conn.cursor()
+            query = "INSERT INTO users VALUES (NULL,'" + name + "' ,'" + surname + "', '" + email + "','" + password + "','user');"
+            cur.execute(query)
+            conn.commit()
+            cur.close()
+            return redirect(url_for("success"))
+        else:
+            return "Thats not the same password..."
     return render_template('register.html')
+
+@app.route('/success', methods = ['GET', 'POST']) 
+def success():
+    return render_template('success.html')
+
+
+@app.route('/varukorg', methods = ['GET', 'POST']) 
+def varukorg():
+    return render_template('varukorg.html')
 
 if __name__ == '__main__':
     createTables()

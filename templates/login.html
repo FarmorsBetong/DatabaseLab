@@ -1,0 +1,21 @@
+{% extends 'baseLogin.html' %}
+
+{% block body %}
+
+<div class="container costum-con">
+    <form method="POST">
+        <div class="form-group">
+            <label>Email address</label>
+            <input type="email" class="form-control" placeholder="name@bigD.com" name="email">
+        </div>
+        <div class="form-group">
+            <label>Lösenord</label>
+            <input type="password" class="form-control" placeholder="123456789" name="pwd">
+        </div>
+
+        <div class="form-group">
+            <button type="submit" class="btn btn-primary" name="submit">Submit</button>
+        </div>
+    </form>
+</div>
+{% endblock%}
