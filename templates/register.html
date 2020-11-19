@@ -1,0 +1,31 @@
+{% extends 'baseLogin.html' %}
+
+{% block body %}
+<form method="POST">
+    <div class="container costum-con">
+        <div class="form-group">
+            <label for="EmailInput">Enter your name</label>
+            <input type="name" name="name" class="form-control" placeholder="Name">
+        </div>
+        <div class="form-group">
+            <label for="EmailInput">Enter your surname</label>
+            <input type="surname" name="surname" class="form-control" placeholder="Surname">
+        </div>
+        <div class="form-group">
+            <label for="EmailInput">Enter your e-mail</label>
+            <input type="email" name="Email_input" class="form-control" placeholder="name@bigD.com">
+        </div>
+        <div class="form-group">
+            <label for="EmailInput">Choose your password </label>
+            <input type="password" name="Pass_input" class="form-control" placeholder="Set your password">
+        </div>
+        <div class="form-group">
+            <label for="EmailInput">Enter your password again</label>
+            <input type="password" name="Pass_input2" class="form-control" placeholder="Enter your password again">
+        </div>
+        <div class="form-group">
+            <button type="submit" class="btn btn-primary" name="submit">Submit</button>
+        </div>
+    </div>
+</form>
+{% endblock %}
