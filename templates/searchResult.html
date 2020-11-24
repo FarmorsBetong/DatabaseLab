@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<style>
+    .box {
+        background-color: gray;
+        border: 2px solid black;
+        margin: 20px;
+        padding: 20px;
+
+    }
+</style>
+<head>
+
+   <h1> Search results for {{search}} </h1>
+
+
+</head>
+<body>
+
+   <div class = page>
+
+    {% for item in test %}
+        
+        <div class = "box" value = {{item[0]}}>
+            <p>
+                ID = id
+            </p>
+            Artikel: {{ item[1]}}
+            
+        </div>
+    {% endfor %}
+   </div>
+
+</body>
+
+
+
+</html>

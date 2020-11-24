@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/css/bootstrap.min.css" integrity="sha384-TX8t27EcRE3e/ihU7zmQxVncDAy5uIKz4rEkgIXeMed4M0jlfIDPvg6uqKI2xXr2" crossorigin="anonymous"> 
-    <link rel="icon" href="../static/images/insta2.jpg" type="image/x-icon">
+    <link rel="icon" href="../static/images/logga.png" type="image/x-icon">
     {% block head %} {% endblock %} <!-- Start of unique header tag-->
 
     <!-- Start of base.html CSS -->
@@ -33,6 +33,10 @@
         background-color: white;
         border-radius: 5px;
       }
+      .logga{
+        width: 100px;
+        height: 100px;
+      }
     </style>  <!-- end of base.html CSS -->
 </head>
 <body>
@@ -40,12 +44,26 @@
   <!-- Start of navigation Bar  -->
 
   <nav class="navbar fixed-top navbar-dark navbar-expand-xl navbar-light bg-dark">
-    <a class="navbar-brand" href="/">YBWS
+    <a class="navbar-brand" href="/"> <img src="../static/images/logga.png" alt="" class="logga">
     </a>
     <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
       <span class="navbar-toggler-icon"></span>
     </button>
     <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      {% if session['name'] %}  <!-- If login in-->
+      <ul class="navbar-nav mr-auto">
+        <li class="nav-item dropdown activate">
+          <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+            Login as {{ session['name']}}
+          </a>
+          <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+            <a class="dropdown-item" href="/profile">Profile</a>
+            <div class="dropdown-divider"></div>
+            <a class="dropdown-item" href="/logout">Logout</a>
+          </div>
+        </li>
+      </ul>
+      {% else %} <!-- if not logged in-->
       <ul class="navbar-nav mr-auto">
         <li class="nav-item dropdown activate">
           <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
@@ -58,6 +76,7 @@
           </div>
         </li>
       </ul>
+      {% endif %}
       <!-- login start-->
       <!--
 
@@ -95,7 +114,7 @@
         </li>
       </ul>
     </div><!-- end login -->
-  -->
+  
       <form class="form-inline" method="POST" >
         <div class="input-group">
           <div class="input-group-prepend">
