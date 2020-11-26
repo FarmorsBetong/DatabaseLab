@@ -94,8 +94,22 @@ def searchResult(res):
     cur.close()
 
 
+    #lägg till och ta bort specifik vara ur varukorg från search sidan
+    if(request.method == "POST"):
+        
+        if(request.form.get("addBtn")):
+            artID = int(request.form["addBtn"])
+            add_to_cart(artID)
+        elif(request.form.get("removeBtn")):
+            artID = int(request.form["removeBtn"])
+            lower_amount(artID)
 
+        
+            
     return render_template('searchResult.html',test = rv, search = res)
+        
+
+    
 
 
 

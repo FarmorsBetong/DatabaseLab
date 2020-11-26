@@ -6,6 +6,7 @@
         border: 2px solid black;
         margin: 20px;
         padding: 20px;
+        margin-right: 40px;
 
     }
 </style>
@@ -18,17 +19,25 @@
 <body>
 
    <div class = page>
-
+    
     {% for item in test %}
+    <form action="" method ="POST">
+
+            <div class = "box" value = {{item[0]}}>
+                Artikel: {{ item[1]}}
+                <button type="submit" name="addBtn" value="{{item[0]}}">
+                    Add 1
+                </button>
+                <button type="submit" name="removeBtn" value="{{item[0]}}">
+                    Remove 1
+                </button>
+                <img src="../static/images/photo_2020-11-09_16-05-17.jpg" style="width:160px;height:120px;">
+            </div>
+
         
-        <div class = "box" value = {{item[0]}}>
-            <p>
-                ID = id
-            </p>
-            Artikel: {{ item[1]}}
-            
-        </div>
+        </form>
     {% endfor %}
+ 
    </div>
 
 </body>
