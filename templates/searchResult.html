@@ -20,7 +20,7 @@
 
    <div class = page>
     
-    {% for item in test %}
+    {% for item in products %}
     <form action="" method ="POST">
 
             <div class = "box" value = {{item[0]}}>
@@ -31,7 +31,7 @@
                 <button type="submit" name="removeBtn" value="{{item[0]}}">
                     Remove 1
                 </button>
-                <img src="../static/images/photo_2020-11-09_16-05-17.jpg" style="width:160px;height:120px;">
+                <img src={{"../static/images/ITEM_" + item[0]|string + ".jpg"}} style="width:160px;height:120px;">
             </div>
 
         

@@ -4,7 +4,7 @@
 <title>Varukorg</title>
 <style>
 .move{
-    margin-top: 100px;
+    margin-top: 150px;
 }
 #shopcart{
     width: 200px;
@@ -18,7 +18,7 @@
     border-radius: 5px;
     float: left;
 }
-.test{
+.item-con{
     height: 150px;
 }
 .sum{
@@ -56,21 +56,26 @@
         
         </div>
         <hr class="my-4">
-        <div class="container test">
+        {% for item in infoAboutItems %}
+        <div class="container item-con">
            <a href="">
-               <img class="shopcartImg" src="../static/images/IMG_2301.jpg" alt="">
+               <img class="shopcartImg" src={{"../static/images/ITEM_" + item[1]|string + ".jpg"}}>
            </a>
             <p class="info">här tänker jag man har produkten</p>
             <div class="amount-con">
                     <div class="container">
-                        <input type="button" value="-">
-                        <input type="number" value="1" min="1" max="123">
-                        <input type="button" value="+" >
+                        <form method="POST">
+                            <button type="submit" value="{{item[1]}}" name="removeBtn">-</button>
+                            <input type="number" value="{{ item[2]}}" min="1" max="123">
+                            <button type="submit" value="{{item[1]}}" name="addBtn">+</button>
+                        </form>
                     </div>
             </div>
             
         </div>
+       
         <hr class="my-4">
+        {% endfor %}
         <p>It uses utility classes for typography and spacing to space content out within the larger container.</p>
         
         <hr class="my-4">

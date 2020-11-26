@@ -12,7 +12,7 @@ mysql.init_app(app)
 
 
 app.config['MYSQL_DATABASE_PASSWORD'] = 'robin123'
-app.config['MYSQL_DATABASE_DB'] = 'test'
+app.config['MYSQL_DATABASE_DB'] = 'ecommerce'
 app.config['MYSQL_DATABASE_USER'] = 'root'
 conn = mysql.connect()
 # Create tables
@@ -28,7 +28,7 @@ def createTables():  #<-- bättre att ha ne funktion för att göra tables //Joh
         PRIMARY KEY(userID))
         ''')
                     
-    cur.execute('''CREATE TABLE IF NOT EXISTS article(
+    cur.execute('''CREATE TABLE IF NOT EXISTS articles(
         article_number INT UNSIGNED AUTO_INCREMENT NOT NULL,
         article_name VARCHAR(100) NOT NULL,
         price INT NOT NULL,
@@ -50,7 +50,7 @@ def createTables():  #<-- bättre att ha ne funktion för att göra tables //Joh
         article_number INT UNSIGNED NOT NULL,
         amount INT UNSIGNED NOT NULL,
         FOREIGN KEY(order_number) REFERENCES orders(order_number) ON DELETE CASCADE,
-        FOREIGN KEY(article_number) REFERENCES article(article_number)
+        FOREIGN KEY(article_number) REFERENCES articles(article_number)
         )''')
             
     cur.execute('''CREATE TABLE IF NOT EXISTS opinion(
@@ -58,8 +58,8 @@ def createTables():  #<-- bättre att ha ne funktion för att göra tables //Joh
         userID INT UNSIGNED NOT NULL,
         grade INT,
         comment VARCHAR(200),
-        FOREIGN KEY(order_number) REFERENCES users(userID),
-        FOREIGN KEY(article_number) REFERENCES article(article_number)
+        FOREIGN KEY(userID) REFERENCES users(userID),
+        FOREIGN KEY(article_number) REFERENCES articles(article_number)
         )''')
     conn.commit()
     cur.close()
@@ -70,6 +70,8 @@ def index():
     if(request.method == "POST"):
        text = request.form["searchbtn"] #bara lite exempel på hur man tar input från html search lådan
        return redirect(url_for("search"))
+       #if(request.form.get['link-varu']):
+
     return render_template('index.html')
 
 @app.route('/search', methods = ['GET', 'POST']) #Search page to look for items in database.
@@ -88,25 +90,28 @@ def search():
 @app.route('/search/<string:res>', methods = ['GET', 'POST'])
 def searchResult(res):
     cur = conn.cursor()
-    cur.execute("SELECT * FROM article WHERE article_name = %s",res)
+    cur.execute("SELECT * FROM articles WHERE article_name = %s",res)
     rv = cur.fetchall()
-    print(rv)
     cur.close()
 
 
     #lägg till och ta bort specifik vara ur varukorg från search sidan
     if(request.method == "POST"):
-        
+        if "user" in session:
+            user = session["user"]
+        else:
+            return redirect(url_for("login"))
+
         if(request.form.get("addBtn")):
             artID = int(request.form["addBtn"])
-            add_to_cart(artID)
+            add_to_cart(artID,user)
         elif(request.form.get("removeBtn")):
             artID = int(request.form["removeBtn"])
-            lower_amount(artID)
+            lower_amount(artID,user)
 
         
             
-    return render_template('searchResult.html',test = rv, search = res)
+    return render_template('searchResult.html',products = rv, search = res)
         
 
     
@@ -198,18 +203,37 @@ def success():
 
 @app.route('/varukorg', methods = ['GET', 'POST']) 
 def varukorg():
-    return render_template('varukorg.html')
-
-
-
-@app.route('/add_to_cart/<int:articleNum>', methods = ['GET', 'POST'])
-def add_to_cart(articleNum):
-    # Kolla om användaren är inloggad, annars skicka dem till inloggningen.
     if "user" in session:
         user = session["user"]
     else:
         return redirect(url_for("login"))
     
+    #cur.execute(query2)
+    #conn.commit()
+    #price = cur.fetchall()
+    #print(str(items))
+    #print(str(price))
+
+    if(request.method == 'POST'):
+        if(request.form.get("addBtn")):
+            artID = int(request.form["addBtn"])
+            add_to_cart(artID,user)
+        elif(request.form.get("removeBtn")):
+            artID = int(request.form["removeBtn"])
+            lower_amount(artID,user)
+    cur = conn.cursor()
+    query = "SELECT * from booked_items where order_number=(SELECT order_number from orders where userID='%s' AND order_placed=0);" %(user)
+    #query2 = "SELECT price from articles where order_number=(SELECT order_number from orders where userID='%s' AND order_placed=0);" %(user)
+    cur.execute(query)
+    conn.commit()
+    items = cur.fetchall()
+    cur.close() # här robin
+
+    return render_template('/varukorg.html', infoAboutItems = items)
+
+
+def add_to_cart(articleNum, user):
+       
     cur = conn.cursor()
 
     # Kolla om det finns en aktiv varukorg till användaren.
@@ -250,7 +274,7 @@ def add_to_cart(articleNum):
         conn.commit()
 
     cur.close()
-    return redirect("/")
+    return #redirect("/")
     
 @app.route('/profile', methods = ['GET', 'POST'])
 def profile():
@@ -258,11 +282,11 @@ def profile():
 
 # Om man vill minska antal av en vara updaterar man amount av varan.
 @app.route('/lower_amount/<int:id>', methods = ['GET', 'POST'])
-def lower_amount(id):
-    if "user" in session:
-        user = session["user"]
-    else:
-        return redirect(url_for("login"))
+def lower_amount(id, user):
+    #if "user" in session:
+     #   user = session["user"]
+    #else:
+     #   return redirect(url_for("login"))
     
     cur = conn.cursor()
 
@@ -270,25 +294,31 @@ def lower_amount(id):
     #return query
     cur.execute(query)
     conn.commit()
-    amount = cur.fetchone()[0]
-
-    # Varan kan inte bli mindre än 1
-    if amount > 1:
+    amount = cur.fetchone()
+    if amount == None:
+        return
+    
+    amount = amount[0]
+    # Varan kan inte bli mindre än 0
+    if amount > 0:
         amount = amount - 1
         query = "UPDATE booked_items SET amount='%i' WHERE article_number='%i' AND order_number=(SELECT order_number FROM orders WHERE userID='%s' AND order_placed=0);" %(amount,id,user)
         cur.execute(query)
         conn.commit()
-
+    elif amount == 0:
+        remove_from_order(id,user)
+    
+        
+    
     cur.close()
     return redirect(url_for("varukorg"))
 
 # Om man trycker på ta bort så tas varan bort från varukorgen.
-@app.route("/remove_from_order/<int:id>", methods = ['GET', 'POST'])
-def remove_from_order(id):
-    if "user" in session:
-        user = session["user"]
-    else:
-        return redirect(url_for("login"))
+def remove_from_order(id,user):
+    #if "user" in session:
+    #    user = session["user"]
+    #else:
+     #   return redirect(url_for("login"))
     
     cur =conn.cursor()
 
