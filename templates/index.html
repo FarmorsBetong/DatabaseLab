@@ -3,7 +3,7 @@
 {% block head %} 
 <title>HomePage</title>
 <style>
-  .tjockis{
+  .pic{
     width:70%;
   }
   .costum-con{
@@ -17,70 +17,34 @@
 
 
 <div class="container-sm costum-con"> <!-- Start of container div for accordion -->
-
   <div class="accordion" id="accordionExample"> <!-- Start of Acordion -->
+    {% for item in items %}
     <div class="card">
       <div class="card-header" id="headingOne">
         <h2 class="mb-0">
-          <button class="btn btn-link btn-block text-left" type="button" data-toggle="collapse" data-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
-            First items description
+          <button class="btn btn-link btn-block text-left" type="button" data-toggle="collapse" data-target="#{{item[1]}}" aria-expanded="true" aria-controls="{{item[1]}}">
+            {{item[1]}}<!--Name of article-->
           </button>
         </h2>
       </div>
-      <div id="collapseOne" class="collapse" aria-labelledby="headingOne" data-parent="#accordionExample">
+      <div id="{{item[1]}}" class="collapse" aria-labelledby="headingOne" data-parent="#accordionExample">
         <div class="card-body">
           <div class="row row-cols-2">
-              <div class="col">Beskrivning.... Lorem ipsum dolor sit amet consectetur adipisicing elit. Itaque nihil laudantium praesentium sed at necessitatibus quam obcaecati numquam ipsum porro odio, sequi iusto dicta quis excepturi molestias ad. Ducimus, deserunt.</div>
-              <div class="col-6">
-                <img class="tjockis" src="../static/images/ITEM_4.jpg" alt="">
+              <div class="col">Beskrivning.... Lorem ipsum dolor sit amet consectetur adipisicing elit. Itaque nihil laudantium praesentium sed at necessitatibus quam obcaecati numquam ipsum porro odio, sequi iusto dicta quis excepturi molestias ad. Ducimus, deserunt.
+                <br><br>
                 <button type="button" class="btn btn-primary" href="">Add to cart</button>
+                <button type="button" class="btn btn-primary" href="">Info</button>
+                <p></p>Price: {{item[2]}} kr</p> <!--Price of article-->
+              </div>
+              <div class="col-6">
+                <img class="pic" src={{"../static/images/ITEM_" + item[0]|string + ".jpg"}}>
               </div>
           </div>
         </div>
       </div>
     </div>
-    <div class="card">
-      <div class="card-header" id="headingTwo">
-        <h2 class="mb-0">
-          <button class="btn btn-link btn-block text-left collapsed" type="button" data-toggle="collapse" data-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
-           #2
-          </button>
-        </h2>
-      </div>
-      <div id="collapseTwo" class="collapse" aria-labelledby="headingTwo" data-parent="#accordionExample">
-        <div class="card-body">
-          <div class="row row-cols-2">
-            <div class="col">Beskrivning.... Lorem ipsum dolor sit amet consectetur adipisicing elit. Itaque nihil laudantium praesentium sed at necessitatibus quam obcaecati numquam ipsum porro odio, sequi iusto dicta quis excepturi molestias ad. Ducimus, deserunt.</div>
-            <div class="col-6">
-              <img class="tjockis" src="../static/images/ITEM_4.jpg" alt="">
-              <button type="button" class="btn btn-primary">+</button>
-              <button type="button" class="btn btn-primary">-</button>
-            </div>
-        </div>
-        </div>
-      </div>
-    </div>
-    <div class="card">
-      <div class="card-header" id="headingThree">
-        <h2 class="mb-0">
-          <button class="btn btn-link btn-block text-left collapsed" type="button" data-toggle="collapse" data-target="#collapseThree" aria-expanded="false" aria-controls="collapseThree">
-            #3
-          </button>
-        </h2>
-      </div>
-      <div id="collapseThree" class="collapse" aria-labelledby="headingThree" data-parent="#accordionExample">
-        <div class="card-body">
-          <div class="row row-cols-2">
-            <div class="col">Beskrivning.... Lorem ipsum dolor sit amet consectetur adipisicing elit. Itaque nihil laudantium praesentium sed at necessitatibus quam obcaecati numquam ipsum porro odio, sequi iusto dicta quis excepturi molestias ad. Ducimus, deserunt.</div>
-            <div class="col-6">
-              <img class="tjockis" src="../static/images/ITEM_4.jpg" alt="">
-              <button type="button" class="btn btn-primary">+</button>
-              <button type="button" class="btn btn-primary">-</button>
-            </div>
-        </div>
-        </div>
-      </div>
-    </div>
+    {% endfor %}
+    
   </div> <!-- end accordion-->
 
 </div>  <!-- Container div for accordion-->

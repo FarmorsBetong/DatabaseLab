@@ -33,6 +33,7 @@ def createTables():  #<-- bättre att ha ne funktion för att göra tables //Joh
         article_name VARCHAR(100) NOT NULL,
         price INT NOT NULL,
         amount INT NOT NULL,
+        info VARCHAR(200) NOT NULL,
         PRIMARY KEY(article_number))
         ''')
 
@@ -70,9 +71,15 @@ def index():
     if(request.method == "POST"):
        text = request.form["searchbtn"] #bara lite exempel på hur man tar input från html search lådan
        return redirect(url_for("searchResult", res = text))
+    
+    cur = conn.cursor()
+    query = "SELECT * FROM articles"
+    cur.execute(query)
+    conn.commit()
+    items = cur.fetchall()
        
 
-    return render_template('index.html')
+    return render_template('index.html', items = items)
 
 @app.route('/search', methods = ['GET', 'POST']) #Search page to look for items in database.
 def search():
@@ -122,16 +129,21 @@ def confirmOrder(): #bekräfta ordern
     cur = conn.cursor()
     user = session["user"]
     cur.execute("UPDATE orders SET order_placed = 1 WHERE userID = %s AND order_placed = 0",user)
+    #
+    #Måste minska antalet varor i "hyllan" också
+    #
+    #
     conn.commit()
     cur.close()
     return
 
-def removeOrder(): #ta bort en befintlig order
-    #ta in ordernummer
-    #gör en query för att ta bort order med rätt ordernummer
-    # return
-    #
-    pass
+def removeOrder(ordNum): #ta bort en befintlig order
+    cur = conn.cursor()
+    user = session["user"]
+    cur.execute("DELETE FROM orders WHERE userID = %s AND order_number = %i",(user, ordNum))
+    conn.commit()
+    cur.close()
+    return
 
 @app.route('/admin', methods = ['GET', 'POST']) #admin page to add items to the database
 def admin():
@@ -141,7 +153,7 @@ def admin():
         else:
             return "Ge fan i att försöka ta dig till fking admin asså"
             # return render_template('profile.html')
-        
+    return "Ge fan i att försöka ta dig till fking admin asså"
 
     
 
@@ -232,13 +244,21 @@ def varukorg():
 
     
     cur = conn.cursor()
-    query = "SELECT * from booked_items where order_number=(SELECT order_number from orders where userID='%i' AND order_placed=0);" %(user)
+    query = "SELECT * FROM booked_items WHERE order_number=(SELECT order_number FROM orders WHERE userID='%i' AND order_placed=0);" %(user)
     cur.execute(query)
     conn.commit()
     items = cur.fetchall()
-    cur.close() 
     
-    return render_template('/varukorg.html', infoAboutItems = items)
+    total = 0
+    for article in items:
+        query = "SELECT price FROM articles WHERE article_number='%i'" %(article[1])
+        cur.execute(query)
+        conn.commit()
+        price = cur.fetchone()
+        total = total + (price[0]*article[2])
+    
+    cur.close() 
+    return render_template('/varukorg.html', infoAboutItems = items, total = total)
 
 
 def add_to_cart(articleNum, user):
