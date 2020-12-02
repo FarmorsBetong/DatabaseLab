@@ -362,6 +362,13 @@ def add_comment(articleID, userID, comment):
 
 #@app.route('/item_info')
 
+# -----------      Profile routes --------------
+@app.route('/orders')
+def profileOrders():
+    return render_template('profileOrders.html')
+
+
+
 if __name__ == '__main__':
     createTables()
     app.debug = True
