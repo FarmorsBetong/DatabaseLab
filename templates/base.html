@@ -32,6 +32,7 @@
         border: 0.5px solid grey;
         background-color: white;
         border-radius: 5px;
+        margin-top: 200px;
       }
       .logga{
         width: 100px;
@@ -51,18 +52,33 @@
     </button>
     <div class="collapse navbar-collapse" id="navbarSupportedContent">
       {% if session['name'] %}  <!-- If login in-->
-      <ul class="navbar-nav mr-auto">
-        <li class="nav-item dropdown activate">
-          <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-            Login as {{ session['name']}}
-          </a>
-          <div class="dropdown-menu" aria-labelledby="navbarDropdown">
-            <a class="dropdown-item" href="/profile">Profile</a>
-            <div class="dropdown-divider"></div>
-            <a class="dropdown-item" href="/logout">Logout</a>
-          </div>
-        </li>
-      </ul>
+        {% if session['role'] == 'admin' %}
+        <ul class="navbar-nav mr-auto">
+          <li class="nav-item dropdown activate">
+            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+              Login as {{ session['name']}}
+            </a>
+            <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+              <a class="dropdown-item" href="/admin">Admin</a>
+              <div class="dropdown-divider"></div>
+              <a class="dropdown-item" href="/logout">Logout</a>
+            </div>
+          </li>
+        </ul>
+        {% else %}
+        <ul class="navbar-nav mr-auto">
+          <li class="nav-item dropdown activate">
+            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+              Login as {{ session['name']}}
+            </a>
+            <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+              <a class="dropdown-item" href="/profile">Profile</a>
+              <div class="dropdown-divider"></div>
+              <a class="dropdown-item" href="/logout">Logout</a>
+            </div>
+          </li>
+        </ul>
+        {% endif %}
       {% else %} <!-- if not logged in-->
       <ul class="navbar-nav mr-auto">
         <li class="nav-item dropdown activate">

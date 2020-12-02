@@ -69,8 +69,8 @@ def createTables():  #<-- bättre att ha ne funktion för att göra tables //Joh
 def index():
     if(request.method == "POST"):
        text = request.form["searchbtn"] #bara lite exempel på hur man tar input från html search lådan
-       return redirect(url_for("search"))
-       #if(request.form.get['link-varu']):
+       return redirect(url_for("searchResult", res = text))
+       
 
     return render_template('index.html')
 
@@ -78,10 +78,6 @@ def index():
 def search():
     if(request.method == "POST"):
         text = request.form["searchArticle"]
-        #cur = conn.cursor()
-        #cur.execute("SELECT * FROM article WHERE article_name = %s",text)
-        #rv = cur.fetchall()
-        #cur.close()
         return redirect(url_for("searchResult", res = text))
 
     return render_template('search.html')
@@ -89,13 +85,6 @@ def search():
 
 @app.route('/search/<string:res>', methods = ['GET', 'POST'])
 def searchResult(res):
-    cur = conn.cursor()
-    cur.execute("SELECT * FROM articles WHERE article_name = %s",res)
-    rv = cur.fetchall()
-    cur.close()
-
-
-    #lägg till och ta bort specifik vara ur varukorg från search sidan
     if(request.method == "POST"):
         if "user" in session:
             user = session["user"]
@@ -108,26 +97,53 @@ def searchResult(res):
         elif(request.form.get("removeBtn")):
             artID = int(request.form["removeBtn"])
             lower_amount(artID,user)
+        elif(request.form.get("itemInfo")):
+            artID = int(request.form["itemInfo"])
+            return redirect(url_for("itemPage", item = artID))
+        else:
+            text = request.form["searchArticle"]
+            return redirect(url_for("searchResult", res = text))
 
-        
-            
+
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM articles WHERE article_name = %s",res)
+    conn.commit()
+    rv = cur.fetchall()
+    cur.close()
+
+    #lägg till och ta bort specifik vara ur varukorg från search sidan
+      
+
     return render_template('searchResult.html',products = rv, search = res)
-        
-
-    
 
 
+
+def confirmOrder(): #bekräfta ordern
+    cur = conn.cursor()
+    user = session["user"]
+    cur.execute("UPDATE orders SET order_placed = 1 WHERE userID = %s AND order_placed = 0",user)
+    conn.commit()
+    cur.close()
+    return
+
+def removeOrder(): #ta bort en befintlig order
+    #ta in ordernummer
+    #gör en query för att ta bort order med rätt ordernummer
+    # return
+    #
+    pass
 
 @app.route('/admin', methods = ['GET', 'POST']) #admin page to add items to the database
 def admin():
-    if(request.method == "POST"):
-        cur = conn.cursor()
-        query = request.form["configure"]
-        cur.execute(query)
-        conn.commit()
-        cur.close()
+    if 'role' in session:
+        if session['role'] == 'admin':
+            return render_template('admin.html')
+        else:
+            return "Ge fan i att försöka ta dig till fking admin asså"
+            # return render_template('profile.html')
+        
 
-    return render_template('admin.html')
+    
 
 
 @app.route('/login', methods = ['GET', 'POST']) #Made by Johan
@@ -142,11 +158,11 @@ def login():
         conn.commit()
 
         #check password
-        temp = cur.fetchone()
+        rv = cur.fetchone()
         #if the email does not exist
-        if(temp == None):
+        if(rv == None):
             return "No user with that email"
-        pwdDB = str(temp[0])
+        pwdDB = str(rv[0])
         if(pwdDB != pwdIn):
             return "Incorrect login"
 
@@ -154,12 +170,10 @@ def login():
         cur.execute("SELECT * FROM users WHERE email=%s", (email,))
         conn.commit()
         user = cur.fetchall()[0]
-        #user = str(cur.fetchone()[0])
-        #name = str(cur.fetchone())
-        #session['name'] = str(cur.fetchone()[1])
         session["user"] = user[0]
         session['name'] = user[1]
         session['surname'] = user[2]
+        session['role'] = user[5]
 
         cur.close()
 
@@ -172,10 +186,9 @@ def logout():
     session.clear()
     return render_template('logout.html')
 
-@app.route('/register', methods = ['GET', 'POST']) #Modified by Johan
+@app.route('/register', methods = ['GET', 'POST']) 
 def register():
     if(request.method == 'POST'):
-
         #Get all the information from the forms
         name = request.form["name"]
         surname = request.form["surname"]
@@ -187,63 +200,58 @@ def register():
         if(password == password2):  
             cur = conn.cursor()
             query = "INSERT INTO users VALUES (NULL, '%s', '%s', '%s', '%s','user');" %(name, surname, email, password) #bättre query, säker //Johan
-            #query = "INSERT INTO users VALUES (NULL,'" + name + "' ,'" + surname + "', '" + email + "','" + password + "','user');"
             cur.execute(query)
             conn.commit()
             cur.close()
-            return redirect(url_for("success"))
+            return render_template("success.html")
         else:
             return "Thats not the same password..."
     return render_template('register.html')
 
-@app.route('/success', methods = ['GET', 'POST']) 
-def success():
-    return render_template('success.html')
-
 
 @app.route('/varukorg', methods = ['GET', 'POST']) 
-def varukorg():
+def varukorg():       
     if "user" in session:
         user = session["user"]
     else:
         return redirect(url_for("login"))
-    
-    #cur.execute(query2)
-    #conn.commit()
-    #price = cur.fetchall()
-    #print(str(items))
-    #print(str(price))
 
     if(request.method == 'POST'):
+        print(request.form.get("confirmOrderBtn"))
         if(request.form.get("addBtn")):
             artID = int(request.form["addBtn"])
             add_to_cart(artID,user)
         elif(request.form.get("removeBtn")):
             artID = int(request.form["removeBtn"])
             lower_amount(artID,user)
+        elif(request.form.get("confirmOrderBtn")):
+            confirmOrder()
+        else:
+            text = request.form["searchbtn"] #bara lite exempel på hur man tar input från html search lådan
+            return redirect(url_for("searchResult", res = text))
+
+    
     cur = conn.cursor()
-    query = "SELECT * from booked_items where order_number=(SELECT order_number from orders where userID='%s' AND order_placed=0);" %(user)
-    #query2 = "SELECT price from articles where order_number=(SELECT order_number from orders where userID='%s' AND order_placed=0);" %(user)
+    query = "SELECT * from booked_items where order_number=(SELECT order_number from orders where userID='%i' AND order_placed=0);" %(user)
     cur.execute(query)
     conn.commit()
     items = cur.fetchall()
-    cur.close() # här robin
-
+    cur.close() 
+    
     return render_template('/varukorg.html', infoAboutItems = items)
 
 
 def add_to_cart(articleNum, user):
-       
     cur = conn.cursor()
 
     # Kolla om det finns en aktiv varukorg till användaren.
     query = "SELECT * FROM orders WHERE userID='%s' AND order_placed=0;" %(user)
     cur.execute(query)
     conn.commit()
-    responce = str(cur.fetchone())
-    if responce == "None":
+    response = cur.fetchone()
+    if (response == None):
         timeStamp = datetime.now()
-        timeStamp = str(timeStamp.year) + str(timeStamp.month) + str(timeStamp.day)
+        timeStamp = str(timeStamp.year) + str(timeStamp.month) + "0" + str(timeStamp.day)#måste vara i format YYYYMMDD där dagen är t.ex 27 eller 08, därav nollan just nu
         
         # Skapa en ny aktiv order.
         query = "INSERT INTO orders VALUES(null, '%s', '%s', 0);" %(user, timeStamp)
@@ -260,21 +268,21 @@ def add_to_cart(articleNum, user):
     query = "SELECT amount FROM booked_items WHERE order_number='%s' AND article_number='%s';" %(orderNum, articleNum)
     cur.execute(query)
     conn.commit()
-    amount = str(cur.fetchone())
+    amount = cur.fetchone()
     
-    if amount == "None":
+    if amount == None:
         # Lägg till vara till ordern.
         query = "INSERT INTO booked_items VALUES('%s', '%s', 1);" %(orderNum, articleNum)
         cur.execute(query)
         conn.commit()
     else:
         # Om varan redan finns updatera amount av varan.
-        query = "UPDATE booked_items SET amount='%s' WHERE order_number='%s' AND article_number='%s';" %(str(int(amount[1])+1), orderNum, articleNum)
+        query = "UPDATE booked_items SET amount='%s' WHERE order_number='%s' AND article_number='%s';" %(str((amount[0])+1), orderNum, articleNum)
         cur.execute(query)
         conn.commit()
 
     cur.close()
-    return #redirect("/")
+    return 
     
 @app.route('/profile', methods = ['GET', 'POST'])
 def profile():
@@ -283,45 +291,31 @@ def profile():
 # Om man vill minska antal av en vara updaterar man amount av varan.
 @app.route('/lower_amount/<int:id>', methods = ['GET', 'POST'])
 def lower_amount(id, user):
-    #if "user" in session:
-     #   user = session["user"]
-    #else:
-     #   return redirect(url_for("login"))
-    
     cur = conn.cursor()
-
     query = "SELECT amount FROM booked_items where article_number='%i' AND order_number=(SELECT order_number FROM orders WHERE userID='%s' AND order_placed=0);" %(id,user)
-    #return query
     cur.execute(query)
     conn.commit()
     amount = cur.fetchone()
-    if amount == None:
+    if (amount == None):
         return
-    
+
     amount = amount[0]
+    print(amount)
     # Varan kan inte bli mindre än 0
     if amount > 0:
         amount = amount - 1
         query = "UPDATE booked_items SET amount='%i' WHERE article_number='%i' AND order_number=(SELECT order_number FROM orders WHERE userID='%s' AND order_placed=0);" %(amount,id,user)
         cur.execute(query)
         conn.commit()
-    elif amount == 0:
+    if amount == 0:
         remove_from_order(id,user)
-    
-        
     
     cur.close()
     return redirect(url_for("varukorg"))
 
 # Om man trycker på ta bort så tas varan bort från varukorgen.
 def remove_from_order(id,user):
-    #if "user" in session:
-    #    user = session["user"]
-    #else:
-     #   return redirect(url_for("login"))
-    
-    cur =conn.cursor()
-
+    cur = conn.cursor()
     query = "DELETE FROM booked_items WHERE article_number='%i' AND order_number=(SELECT order_number FROM orders WHERE userID='%s' AND order_placed=0);" %(id,user)
     cur.execute(query)
     conn.commit()
@@ -329,6 +323,24 @@ def remove_from_order(id,user):
     cur.close()
     return redirect(url_for("varukorg"))
 
+@app.route('/add_comment/<int:articleID>/<int:userID>/<string:comment>')
+def add_comment(articleID, userID, comment):
+    cur = conn.cursor()
+    query = "SELECT * FROM opinion WHERE article_number='%i' AND userID='%i';" %(articleID, userID)
+    cur.execute(query)
+    conn.commit()
+
+    if cur.fetchone() == None:
+        query = "INSERT INTO opinion VALUES('%i', '%i', NULL, '%s');" %(articleID, userID, comment)
+        cur.execute(query)
+        conn.commit()
+    else:
+        query = "UPDATE opinion SET comment='%s' WHERE article_number='%i' AND userID='%i';" %(comment, articleID, userID)
+        cur.execute(query)
+        conn.commit()
+    return redirect(url_for("index"))#här ska den redirecta tillbaka till artikelsidan.
+
+#@app.route('/item_info')
 
 if __name__ == '__main__':
     createTables()

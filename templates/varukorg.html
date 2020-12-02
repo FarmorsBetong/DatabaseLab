@@ -31,7 +31,6 @@
 }
 .amount-con{
     width: 20%;
-    background-color: yellow;
     height: 100%;
     margin-top: -60px;
     float:right;
@@ -61,9 +60,9 @@
            <a href="">
                <img class="shopcartImg" src={{"../static/images/ITEM_" + item[1]|string + ".jpg"}}>
            </a>
-            <p class="info">här tänker jag man har produkten</p>
+            <p class="info">här tänker jag man har produkt beskrivningen</p>
             <div class="amount-con">
-                    <div class="container">
+                    <div class="container ">
                         <form method="POST">
                             <button type="submit" value="{{item[1]}}" name="removeBtn">-</button>
                             <input type="number" value="{{ item[2]}}" min="1" max="123">
@@ -80,6 +79,9 @@
         
         <hr class="my-4">
         <a href="/search">Continue Shopping</a>
+        <form method="POST">
+            <button type="submit" class="btn btn-success" value = "confirmOrder" name="confirmOrderBtn"> Place order</button>
+        </form> 
         <h2 class="sum"> TOTAL </h2>
       </div>
 </div>
