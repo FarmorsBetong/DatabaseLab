@@ -239,26 +239,34 @@ def varukorg():
         elif(request.form.get("confirmOrderBtn")):
             confirmOrder()
         else:
-            text = request.form["searchbtn"] #bara lite exempel på hur man tar input från html search lådan
+            text = request.form["searchbtn"] 
             return redirect(url_for("searchResult", res = text))
 
     
     cur = conn.cursor()
-    query = "SELECT * FROM booked_items WHERE order_number=(SELECT order_number FROM orders WHERE userID='%i' AND order_placed=0);" %(user)
+    query = "SELECT order_number FROM orders WHERE userID='%i' AND order_placed=1;" %(user)
     cur.execute(query)
     conn.commit()
-    items = cur.fetchall()
+    orders = cur.fetchall()
+    print(orders)
     
-    total = 0
-    for article in items:
-        query = "SELECT price FROM articles WHERE article_number='%i'" %(article[1])
+    #all_orders = []
+    for orderNr in orders:
+        query = "SELECT articles.article_number, articles.article_name, articles.price, booked_items.amount FROM booked_items INNER JOIN articles ON booked_items.article_number=articles.article_number WHERE booked_items.order_number='%i';" %(orderNr)
         cur.execute(query)
         conn.commit()
-        price = cur.fetchone()
-        total = total + (price[0]*article[2])
+        #all_orders.append(cur.fetchall())
+    robin_all_orders = cur.fetchall()
+    print(robin_all_orders)
+    #return str(all_orders)
+    #items = cur.fetchall()
     
-    cur.close() 
-    return render_template('/varukorg.html', infoAboutItems = items, total = total)
+    total = 0
+    for x in robin_all_orders:
+        total += x[2] * x[3]
+    
+    cur.close()
+    return render_template('/varukorg.html', infoAboutItems = robin_all_orders, totalPrice = total)
 
 
 def add_to_cart(articleNum, user):
@@ -365,7 +373,11 @@ def add_comment(articleID, userID, comment):
 # -----------      Profile routes --------------
 @app.route('/orders')
 def profileOrders():
+    cur = conn.cursor()
+    userID = session['user']
+    query = "Select * from booked_items where order_Number(Select Order_number from orders where userID='%s')" %(userID) 
     return render_template('profileOrders.html')
+    
 
 
 
