@@ -5,18 +5,48 @@
     .order-info{
         height: 50px;
     }
+    .wrapper{
+        width: 70%;
+        margin: auto;
+        margin-top: 30px;
+    }
+    th,td {
+        padding-left: 15px;
+    }
 </style>
 {% endblock %}
 
 {% block body %}
 
+{% for order in orders %}
 <div class="container-fluid">
-    <div class="jumbotron">
+    <div class="jumbotron wrapper">
         <div class="order-info">
-            <h1>Order info:</h1>
+            <h1>Order number: {{order[0][4]}}</h1>
         </div>
         <hr class="my-4">
+        <div class="container">
+            <table>
+                <tr>
+                    <th>Article</th>
+                    <th>Amount</th>
+                    <th>Price/item</th>
+                </tr>
+                {% for item in order%}
+                    <tr>
+                        <td>{{item[1]}}</td>
+                        <td>{{item[3]}}</td>
+                        <td>{{item[2]}}</td>
+                    </tr>
+                {%endfor%}
+            </table>      
+            <p class="lead">{{tot}}:-</p>       
+        </div>
+        <hr class="my-4">
+        <form method="POST">
+            <button class="btn btn-danger" value="{{order[0][4]}}" name="remove_order">Remove order</button>
+        </form>   
     </div>
 </div>
-
+{%endfor%}
 {% endblock %}

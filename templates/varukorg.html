@@ -6,41 +6,28 @@
 .move{
     margin-top: 150px;
 }
-#shopcart{
-    width: 200px;
-    border-radius: 5px;
-    float: right;
-    position: relative;
-    top: -70px;
-}
 .shopcartImg{
-    width: 200px;
-    border-radius: 5px;
-    float: left;
+  
 }
 .item-con{
     height: 150px;
 }
-.sum{
-    position: relative;
-    float: right;
-    right: 20%;
+.img-con{
+    background-color: yellow;
+    height: fit-content;
+    width: fit-content;
 }
 .info{
-    position: relative;
+    height:150px;
 }
-.amount-con{
-    width: 20%;
-    height: 100%;
-    margin-top: -60px;
-    float:right;
-}
+
+
 .intro{
     height: 150px;
 }
-.amount{
-    display: block;
-    
+.form-con{
+    margin: auto;
+    margin-top: 30%;
 }
 </style>
 {% endblock %}
@@ -49,40 +36,50 @@
 
 <div class="container move">
     <div class="jumbotron">
-        <div class="container intro">
-        <h1 class="display-4">Shopping cart!</h1>
-            <img src="../static/images/shoppin.jpg" id=shopcart alt="">
-        
+        <div class="container intro row">
+            <div class="col">
+                <h1 class="display-4">Shopping cart!</h1>
+            </div>
+            <div class="col">
+                <img src="../static/images/shoppin.jpg" id=shopcart class="img-thumbnail float-right shopcartImg" width="200px">
+            </div>
         </div>
         <hr class="my-4">
         {% for item in infoAboutItems %}
-        <div class="container item-con">
-           <a href="">
-               <img class="shopcartImg" src={{"../static/images/ITEM_" + item[1]|string + ".jpg"}}>
-           </a>
-            <p class="info">här tänker jag man har produkt beskrivningen</p>
-            <div class="amount-con">
-                    <div class="container ">
+        <div class="item-con row">
+            <div class="img-con col-xs-6">
+                <a href="">
+                    <img class="shopcartImg img-thumbnail rounded float-left"" src={{"../static/images/ITEM_" + item[0]|string + ".jpg"}} width="200px">
+                </a>
+            </div>
+            <div class="info col">
+                <p class=" lead"> {{item[1]}}
+                    <br>
+                    {{item[2]}} :-
+                </p>
+            </div>
+            <div class="amount-con col-s">
+                    <div class="form-con">
                         <form method="POST">
-                            <button type="submit" value="{{item[1]}}" name="removeBtn">-</button>
-                            <input type="number" value="{{ item[2]}}" min="1" max="123">
-                            <button type="submit" value="{{item[1]}}" name="addBtn">+</button>
+                            <button type="submit" class="btn btn-danger" name="removeBtn" value="{{item[0]}}">-</button>
+                            <input type="number" value="{{item[3]}}" min="1" max="123">
+                            <button type="submit" class="btn btn-danger" value="{{item[0]}}" name="addBtn">+</button>
                         </form>
                     </div>
             </div>
-            
         </div>
        
         <hr class="my-4">
         {% endfor %}
-        <p>It uses utility classes for typography and spacing to space content out within the larger container.</p>
         
-        <hr class="my-4">
-        <a href="/search">Continue Shopping</a>
+        
+        <h2 class="float-right"> TOTAL: {{totalPrice}} kr</h2>
         <form method="POST">
             <button type="submit" class="btn btn-success" value = "confirmOrder" name="confirmOrderBtn"> Place order</button>
         </form> 
-        <h2 class="sum"> TOTAL: {{total}} kr</h2>
+        <hr class="my-4">
+        <a href="/search">Continue Shopping</a>
+        <p class=" lead" >© 2020 YouBuyItWeSellIT Limited | All Rights Reserved. | Be a visionary</p> 
       </div>
 </div>
 {% endblock %}

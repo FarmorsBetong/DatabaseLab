@@ -30,14 +30,14 @@
       <div id="{{item[1]}}" class="collapse" aria-labelledby="headingOne" data-parent="#accordionExample">
         <div class="card-body">
           <div class="row row-cols-2">
-              <div class="col">Beskrivning.... Lorem ipsum dolor sit amet consectetur adipisicing elit. Itaque nihil laudantium praesentium sed at necessitatibus quam obcaecati numquam ipsum porro odio, sequi iusto dicta quis excepturi molestias ad. Ducimus, deserunt.
+              <div class="col">{{item[4]}}
                 <br><br>
                 <button type="button" class="btn btn-primary" href="">Add to cart</button>
                 <button type="button" class="btn btn-primary" href="">Info</button>
                 <p></p>Price: {{item[2]}} kr</p> <!--Price of article-->
               </div>
               <div class="col-6">
-                <img class="pic" src={{"../static/images/ITEM_" + item[0]|string + ".jpg"}}>
+                <img class="pic img-thumbnail" src={{"../static/images/ITEM_" + item[0]|string + ".jpg"}}>
               </div>
           </div>
         </div>

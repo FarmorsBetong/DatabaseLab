@@ -21,6 +21,62 @@
       .costum-nav{
         margin-bottom: 50px;
       }
+      .varukorg{
+        width: 21%;
+        border-radius: 5px;
+      }
+
+       /* Footer css start */
+       .footer-bs {
+      padding: 60px 40px;
+      color: rgba(255,255,255,1.00);
+      margin-top: 200px;
+    }
+    .footer-bs .footer-brand, .footer-bs .footer-nav, .footer-bs .footer-social, .footer-bs .footer-ns { padding:10px 25px; }
+    .footer-bs .footer-nav, .footer-bs .footer-social, .footer-bs .footer-ns { border-color: transparent; }
+    .footer-bs .footer-brand h2 { margin:0px 0px 10px; }
+    .footer-bs .footer-brand p { font-size:12px; color:rgba(255,255,255,0.70); }
+    
+    .footer-bs .footer-nav ul.pages { list-style:none; padding:0px; }
+    .footer-bs .footer-nav ul.pages li { padding:5px 0px;}
+    .footer-bs .footer-nav ul.pages a { color:rgba(255,255,255,1.00); font-weight:bold; text-transform:uppercase; }
+    .footer-bs .footer-nav ul.pages a:hover { color:rgba(255,255,255,0.80); text-decoration:none; }
+    .footer-bs .footer-nav h4 {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 3px;
+      margin-bottom:10px;
+    }
+    
+    .footer-bs .footer-nav ul.list { list-style:none; padding:0px; }
+    .footer-bs .footer-nav ul.list li { padding:5px 0px;}
+    .footer-bs .footer-nav ul.list a { color:rgba(255,255,255,0.80); }
+    .footer-bs .footer-nav ul.list a:hover { color:rgba(255,255,255,0.60); text-decoration:none; }
+    
+    .footer-bs .footer-social ul { list-style:none; padding:0px; }
+    .footer-bs .footer-social h4 {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 3px;
+    }
+    .footer-bs .footer-social li { padding:5px 4px;}
+    .footer-bs .footer-social a { color:rgba(255,255,255,1.00);}
+    .footer-bs .footer-social a:hover { color:rgba(255,255,255,0.80); text-decoration:none; }
+    
+    .footer-bs .footer-ns h4 {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 3px;
+      margin-bottom:10px;
+    }
+    .footer-bs .footer-ns p {
+       font-size:12px; color:rgba(255,255,255,0.70);
+    }
+    
+    @media (min-width: 768px) {
+      .footer-bs .footer-nav, .footer-bs .footer-social, .footer-bs .footer-ns { border-left:solid 1px rgba(255,255,255,0.10); }
+    }
+    /* footer css end */
     </style>  <!-- end of base.html CSS -->
     {% block head%} {% endblock %}
 </head>
@@ -62,13 +118,18 @@
         </li>
       </ul>
       {% endif %}
+      <div class="varukorg">
+        <a href="/varukorg" name="link-varu">
+          <img src="../static/images/shoppin.jpg" alt="" class="varukorg">
+        </a>
+    </div>
     </div>
   </nav> <!--  Navbar end -->
 
     <div class="container">
         <form method="POST">
             <div class="input-group md-3">
-                <input type="text" name="searchArticle" class="form-control" placeholder="Search for an article you son of a B****!"> 
+                <input type="text" name="searchArticle" class="form-control" placeholder="Search for an article in our assortment"> 
                 <div class="input-group-append">
                     <span class="input-group-text">Articles</span>
                 </div>
@@ -78,19 +139,56 @@
     {% block body %} {% endblock %}
 
 
-    <!-- Start of endPage -->
-    <div class="container-fluid endOfPage bg-dark">
-      <div class="row row-cols-3" >
-        <div class="col col-md-4">
-          <a href="">
-            <img class="icon bg-dark" src="../static/images/photo_2020-11-09_16-05-17.jpg" alt="">
-          </a>
-      
+  <!-- Start of endPage -->
+  <footer class="footer-bs footer-costum bg-dark">
+    <div class="row">
+      <div class="col-md-3 footer-brand animated fadeInLeft">
+          <img src="../static/images/logga.png" width=200px>
+            <p>YoubuyItWeSellIt webpage is designed by 3 dedicated programmers from LTU as school project. This webpage showcases how to flexible combine python flask with html </p>
+            <p>© 2020 YoubuyItWeSellIt, All rights reserved</p>
         </div>
-        <div class="col cold-md-4">fan </div>
-        <div class="">fan</div>
-      </div>
-    </div> <!-- end of endPage -->
+      <div class="col-md-4 footer-nav animated fadeInUp">
+          <h4>Who are we?—</h4>
+          <div class="col-md-6">
+                <ul class="pages">
+                    <li>Johan Larsson</li>
+                    <li>Robin Olofsson</li>
+                    <li>Jon Westerlund</li>
+                    
+                </ul>
+            </div>
+          <div class="col-md-6">
+                <ul class="list">
+                    <li><a href="#">About Us</a></li>
+                    <li><a href="#">Contacts</a></li>
+                    <li><a href="#">Terms & Condition</a></li>
+                    <li><a href="#">Privacy Policy</a></li>
+                </ul>
+            </div>
+        </div>
+      <div class="col-md-2 footer-social animated fadeInDown">
+          <h4>Follow Us</h4>
+          <ul>
+              <li><a href="#"> <img src="https://cdn2.iconfinder.com/data/icons/black-white-social-media/32/online_social_media_facebook-128.png" width="40px"></a></li>
+              <li><a href="https://www.linkedin.com/in/robin-olofsson-94358017a/"><img src="https://cdn2.iconfinder.com/data/icons/black-white-social-media/32/linked_in_online_social_media-128.png" width="40px"></a> <span class="linked"></span></li>
+              <li><a href="#"><img src="https://cdn2.iconfinder.com/data/icons/black-white-social-media/32/instagram_online_social_media_photo-128.png" width="40px"></a></li>
+            </ul>
+        </div>
+      <div class="col-md-3 footer-ns animated fadeInRight">
+          <h4>Products</h4>
+            <p>A rover wearing a fuzzy suit doesn’t alarm the real penguins</p>
+            <p>
+                <div class="input-group">
+                  <input type="text" class="form-control" placeholder="Search for...">
+                  <span class="input-group-btn">
+                    <button class="btn btn-default" type="button"> <span class="glyphicon glyphicon-envelope"></span></button>
+                  </span>
+
+                </div><!-- /input-group -->
+             </p>
+        </div>
+    </div>
+</footer>
 
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js" integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-ho+j7jyWK8fNQe+A12Hb8AhRq26LrZ/JpcUGGOn+Y7RsweNrtN/tE3MoK7ZeZDyx" crossorigin="anonymous"></script>

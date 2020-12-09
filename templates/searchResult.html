@@ -12,21 +12,24 @@
 </style>
    {% endblock %}
 {% block body %}
-    <h1> Search results for {{search}} </h1>
-   <div class = page>
+    <div class="container">
+        <h1 class="lead"> Search results for {{search}} </h1>
+    </div>
+   <div class = container>
     
     {% for item in products %}
     <form action="" method ="POST">
 
             <div class = "box" value = {{item[0]}}>
                 Artikel: {{ item[1]}}
+                <img src={{"../static/images/ITEM_" + item[0]|string + ".jpg"}} style="width:160px;height:120px;">
                 <button type="submit" name="addBtn" value="{{item[0]}}">
                     Add 1
                 </button>
                 <button type="submit" name="removeBtn" value="{{item[0]}}">
                     Remove 1
                 </button>
-                <img src={{"../static/images/ITEM_" + item[0]|string + ".jpg"}} style="width:160px;height:120px;">
+                
                 <button type="submit" name="itemInfo" value="{{item[0]}}">
                     Item info
                 </button>
