@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect,url_for, session
+from flask import Flask, render_template, request, redirect,url_for, session, flash
 from flaskext.mysql import MySQL
 from flask_login import LoginManager
 from datetime import datetime
@@ -22,9 +22,10 @@ def createTables():  #<-- bättre att ha ne funktion för att göra tables //Joh
         userID INT UNSIGNED AUTO_INCREMENT NOT NULL,
         firstname VARCHAR(100) NOT NULL,
         surname VARCHAR(100) NOT NULL,
-        email VARCHAR(100) NOT NULL,
+        email VARCHAR(100) NOT NULL UNIQUE,
         password VARCHAR(100) NOT NULL,
         role VARCHAR(10) NOT NULL,
+        money INT NOT NULL DEFAULT '0',
         PRIMARY KEY(userID))
         ''')
                     
@@ -69,8 +70,12 @@ def createTables():  #<-- bättre att ha ne funktion för att göra tables //Joh
 @app.route('/', methods = ['GET', 'POST'])
 def index():
     if(request.method == "POST"):
-       text = request.form["searchbtn"] #bara lite exempel på hur man tar input från html search lådan
-       return redirect(url_for("searchResult", res = text))
+        if(request.form.get("info_btn")):
+            artID = request.form['info_btn']
+            return redirect(url_for("itemInfo", artID = artID))
+        else:
+            text = request.form["searchbtn"] #bara lite exempel på hur man tar input från html search lådan
+            return redirect(url_for("searchResult", res = text))
     
     cur = conn.cursor()
     query = "SELECT * FROM articles"
@@ -144,6 +149,10 @@ def confirmOrder(): #bekräfta ordern
 
 
     conn.commit()
+
+    #transaction(user, )
+
+
     cur.close()
     return
 
@@ -171,6 +180,9 @@ def admin():
 @app.route('/login', methods = ['GET', 'POST']) #Made by Johan
 def login():
     if(request.method == 'POST'):
+        if(request.form.get("register")):
+            return redirect(url_for("register"))
+
         email = request.form["email"]
         pwdIn = request.form["pwd"]
         
@@ -183,7 +195,7 @@ def login():
         rv = cur.fetchone()
         #if the email does not exist
         if(rv == None):
-            return "No user with that email"
+            return redirect(url_for("login"))
         pwdDB = str(rv[0])
         if(pwdDB != pwdIn):
             return "Incorrect login"
@@ -197,6 +209,7 @@ def login():
         session['surname'] = user[2]
         session['email'] = user[3]
         session['role'] = user[5]
+        session["money"] = user[6]
 
         cur.close()
 
@@ -206,8 +219,10 @@ def login():
 
 @app.route('/logout')
 def logout():
+    name = session["name"]
     session.clear()
-    return render_template('logout.html')
+    flash("You successfully logged out from: " + name, "info")
+    return redirect(url_for("index"))
 
 @app.route('/register', methods = ['GET', 'POST']) 
 def register():
@@ -218,17 +233,36 @@ def register():
         email = request.form["Email_input"]
         password = request.form["Pass_input"]
         password2 = request.form["Pass_input2"]
-        
-        
+
+        cur = conn.cursor()
+        query = "SELECT email FROM users;" #bättre query, säker //Johan
+        cur.execute(query)
+        conn.commit()
+        allEmails = cur.fetchall()
+        print("Kolla här\n")
+        for emails in allEmails:
+            if email == emails[0]:
+                flash("Email: " + email + " already exists", "error")
+                return redirect(url_for("register"))
+
         if(password == password2):  
-            cur = conn.cursor()
-            query = "INSERT INTO users VALUES (NULL, '%s', '%s', '%s', '%s','user');" %(name, surname, email, password) #bättre query, säker //Johan
+            query = "INSERT INTO users VALUES (NULL, '%s', '%s', '%s', '%s','user','0');" %(name, surname, email, password) #bättre query, säker //Johan
             cur.execute(query)
             conn.commit()
+            cur.execute("SELECT * FROM users WHERE email=%s", (email,))
+            conn.commit()
+            user = cur.fetchall()[0]
             cur.close()
-            return render_template("success.html")
+            session["user"] = user[0]
+            session['name'] = user[1]
+            session['surname'] = user[2]
+            session['email'] = user[3]
+            session['role'] = user[5]
+            session['money'] = user[6]
+            return render_template("index.html")
         else:
-            return "Thats not the same password..."
+            flash("Thats not the same password...", "info")
+            return redirect(url_for("register"))
     return render_template('register.html')
 
 # varukorgen
@@ -249,7 +283,26 @@ def varukorg():
             artID = int(request.form["removeBtn"])
             lower_amount(artID,user)
         elif(request.form.get("confirmOrderBtn")):
-            confirmOrder()
+            cur = conn.cursor()
+            query = "SELECT order_number FROM orders WHERE userID='%i' AND order_placed=0;" %(user)
+            cur.execute(query)
+            conn.commit()
+            orders = cur.fetchone()
+            if(orders != None):
+                orderNr = orders[0]
+            
+                query = "SELECT articles.article_number, articles.article_name, articles.price, booked_items.amount FROM booked_items INNER JOIN articles ON booked_items.article_number=articles.article_number WHERE booked_items.order_number='%i';" %(orderNr)
+                cur.execute(query)
+                conn.commit()
+                allOrders = cur.fetchall()
+            
+                amount = 0
+                for x in allOrders:
+                    amount += x[2] * x[3]
+        
+                cur.close()
+                if(transaction(user, amount)):
+                    confirmOrder()
         else:
             text = request.form["searchbtn"] 
             return redirect(url_for("searchResult", res = text))
@@ -280,8 +333,6 @@ def varukorg():
 
 def add_to_cart(articleNum, user):
     cur = conn.cursor()
-
-
     # Kolla om det finns en aktiv varukorg till användaren.
     query = "SELECT * FROM orders WHERE userID='%s' AND order_placed=0;" %(user)
     cur.execute(query)
@@ -289,7 +340,7 @@ def add_to_cart(articleNum, user):
     response = cur.fetchone()
     if (response == None):
         timeStamp = datetime.now()
-        if(str(timeStamp.day)[0] != "0"):
+        if(timeStamp.day < 10):
             timeStamp = str(timeStamp.year) + str(timeStamp.month) + "0" + str(timeStamp.day)#måste vara i format YYYYMMDD där dagen är t.ex 27 eller 08, därav nollan just nu
         else:
             timeStamp = str(timeStamp.year) + str(timeStamp.month) + str(timeStamp.day)
@@ -423,6 +474,10 @@ def addComment(articleID, userID, comment):
 def itemInfo(artID):
 
     if(request.method == 'POST'):
+        if("user" in session):
+            user = session["user"]
+        else:
+            return redirect(url_for("login"))
 
         if(request.form.get("reviewBtn")):
             comment = str(request.form["commentBox"])
@@ -434,12 +489,10 @@ def itemInfo(artID):
 
             print(comment + ", " + str(grade))
         elif(request.form.get("addBtn")):
-            if("user" in session):
-                user = session["user"]
-            else:
-                return redirect(url_for("login"))
-
+                        
             artID = int(request.form["addBtn"])
+            print(artID)
+            print(user)
             add_to_cart(artID,user)
         else:
             text = request.form["searchbtn"]
@@ -471,6 +524,52 @@ def itemInfo(artID):
     return render_template("itemInfo.html", product = product, grades = grades, gradeAvg = gradeAvg)
 
 
+def transaction(looser,amount):
+    gainer = 24
+    cur = conn.cursor()
+    try:
+        query = "START TRANSACTION"
+        cur.execute(query)
+
+        query = "UPDATE users SET money = money - %i WHERE userID = %s"%(amount, looser)#someone looses money
+        cur.execute(query)
+
+        query = "UPDATE users SET money = money + %i WHERE userID = %s"%(amount, gainer)#the bank gains money
+        cur.execute(query)
+
+        conn.commit()
+        cur.close()
+        return True
+    except:
+        conn.rollback()
+        cur.close()
+        return False
+    
+
+def addMoney(amount, user):
+    cur = conn.cursor()
+    query = "UPDATE users SET money = money + %i WHERE userID = %s"%(amount, user)
+    cur.execute(query)
+    conn.commit()
+    cur.close()
+    return
+
+
+def removeMoney(amount, user):
+    cur = conn.cursor()
+    query = "SELECT money FROM users WHERE userID = %s"%(user)
+    cur.execute(query)
+    conn.commit()
+    currAmount = cur.fetchone()
+    #if the users lacks sufficient funds
+    if(amount > currAmount[0]):
+        return
+    query = "UPDATE users SET money = money - %i WHERE userID = %s"%(amount, user)
+    cur.execute(query)
+    conn.commit()
+    cur.close()
+    return
+    
 
 # -----------      Profile routes --------------
 
@@ -479,10 +578,56 @@ def profile():
     #
     #om ens user-role är admin bör en adminsida returneras istället
     #
-    userinfo =[]
-    userinfo.append(session['name'])
-    userinfo.append(session['surname'])
-    userinfo.append(session['email'])
+    cur = conn.cursor()
+    
+
+    if(request.method == 'POST'):
+        if(request.form.get("submitUser")):
+            fname = request.form["fname"]
+            lname = request.form["lname"]
+            email = request.form["email"]
+            query = "UPDATE users SET firstname = '%s', surname = '%s', email = '%s' WHERE userID ='%s'" %(fname,lname,email,session['user'])
+            cur.execute(query)
+            conn.commit()
+            session['name'] = fname
+            session['surname'] = lname
+        elif(request.form.get("addMoneyBtn")):
+            amount = int(request.form["makeMoney"])
+
+            if(amount > 0):
+                addMoney(amount,session["user"])
+            else:
+                amount = -amount
+                removeMoney(amount,session["user"])
+                session['money'] = amount
+        elif(request.form.get("submitPass")):
+            request.form['Password']
+            oldPass = request.form['Password']
+            newPass = request.form['newPassword']
+            newPassAgain = request.form['newPasswordAgain']
+            print("hallå")
+            query = "SELECT users.password FROM users WHERE userID='%s'" %(session['user'])
+            cur.execute(query)
+            conn.commit()
+            currentPass = cur.fetchone()[0]
+            print(currentPass)
+
+            if(currentPass == oldPass):
+                if(newPass == newPassAgain):
+                    print("kommer vi hit?")
+                    query = "UPDATE users SET password = '%s' WHERE userID ='%s'" %(newPass,session['user'])
+                    cur.execute(query)
+                    conn.commit()
+                else:
+                    flash("The password doesn't match!")
+            else:
+                flash("You entered the wrong password!")
+
+    query = "Select users.firstname, users.surname, users.email, users.money from users where userID='%i'" %(session['user'])
+    cur.execute(query)
+    conn.commit()
+    userinfo = cur.fetchone()
+    cur.close()
     return render_template('profile.html', userInfo = userinfo)
 
 

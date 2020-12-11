@@ -5,7 +5,7 @@
 .costum-container{
     margin: auto;
     margin-top: 6%;
-    height: 500px;
+    padding-bottom: 20px;
     width: 100%;
     border: 1px solid grey;
     border-radius: 5px;
@@ -44,8 +44,9 @@
                 </thead>
                 <tbody>
                   <tr>
-                    <th scope="row">Firstname:</th>
-                    <td class="col-s">{{userInfo[0]}}</td>
+                    <th scope="row">First name:</th>
+                    <td class="col-s">
+                      {{userInfo[0]}}</td>
                   </tr>
                   <tr>
                     <th scope="row">Last name:</th>
@@ -56,10 +57,15 @@
                     <th scope="row">Email:</th>
                     <td>{{userInfo[2]}}</td>
                     
-                  </tr class="hover">
+                  </tr>
                   <tr>
                     <th scope="row">Password:</th>
                     <td>******</td>
+                    
+                  </tr>
+                  <tr>
+                    <th scope="row">Money:</th>
+                    <td>{{userInfo[3]}}</td>
                     
                   </tr>
                 </tbody>
@@ -67,7 +73,81 @@
         </div>
     </div>
     <div class="container">
-        <button class="btn btn-danger float-right">Change password</button>
+      <p>
+        <a class="btn btn-primary" data-toggle="collapse" href="#multiCollapseExample1" role="button" aria-expanded="false" aria-controls="multiCollapseExample1">Change user information</a>
+        <button class="btn btn-primary" type="button" data-toggle="collapse" data-target="#multiCollapseExample2" aria-expanded="false" aria-controls="multiCollapseExample2">Change password</button>
+        <button class="btn btn-primary" type="button" data-toggle="collapse" data-target="#addMoney" aria-expanded="false" aria-controls="addMoney" >Add Money</button>
+      </p>
+      <div class="row">
+        <div class="col">
+          <div class="collapse multi-collapse" id="multiCollapseExample1">
+            <div class="card card-body">
+              <form method="POST">
+                <div class="form-group">
+                  <label for="firstName">First name</label>
+                  <input type="text" class="form-control" id="exampleInputEmail1" aria-describedby="emailHelp" name="fname" value="{{userInfo[0]}}">
+                </div>
+                <div class="form-group">
+                  <label for="Last">Last name</label>
+                  <input type="text" class="form-control" id="exampleInputEmail1" aria-describedby="emailHelp" name="lname" value="{{userInfo[1]}}">
+                </div>
+                <div class="form-group">
+                  <label for="exampleInputEmail1">Email address</label>
+                  <input type="email" class="form-control" id="exampleInputEmail1" aria-describedby="emailHelp" name="email" value="{{userInfo[2]}}">
+                  <small id="emailHelp" class="form-text text-muted">We'll never share your email with anyone else.</small>
+                </div>
+                <button type="submit" class="btn btn-primary" name="submitUser" value="submitUser">Submit</button>
+              </form>
+            </div>
+          </div>
+        </div>
+        <div class="col">
+          <div class="collapse multi-collapse" id="multiCollapseExample2">
+            <div class="card card-body">
+              <form method="POST">
+                <div class="form-group">
+                  <label for="OriginalPw">Your current password</label>
+                  <input type="password"  name="Password" class="form-control" >
+                </div>
+                <div class="form-group">
+                  <label for="newPassword">New password</label>
+                  <input type="password"  name="newPassword"class="form-control" >
+                </div>
+                <div class="form-group">
+                  <label for="newPasswordAgain">Enter the password again</label>
+                  <input type="password"  name="newPasswordAgain" class="form-control">
+                </div>
+                <div class="form-group">
+                  <button type="submit" class="btn btn-primary" name="submitPass" value="submitPass">Submit</button>
+                </div>
+              </form>
+            </div>
+          </div>
+          <div class="collapse multi-collapse" id="addMoney">
+            <div class="card card-body">
+              <h2 class="lead">Here you can add to your balance:</h2>
+              <form method="POST">
+                <div class="form-group">
+                  <label for="MakeMoney">Enter your value in :-</label>
+                  <input type="numbers" class="form-control" name="makeMoney">
+                </div>
+                <div class="form-group">
+                  <button type="submit" class="btn btn-primary" name="addMoneyBtn" value="addMoneyBtn">Submit</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+      {% with messages = get_flashed_messages() %}
+                {% if messages %}
+                  {% for msg in messages %}
+                    <div class="alert alert-info" role="alert">
+                      {{msg}}
+                    </div>
+                  {% endfor %}
+                {% endif %}
+              {% endwith %}
     </div>
 </div>
 {% endblock %}

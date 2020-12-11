@@ -13,11 +13,29 @@
         </div>
         <div class="form-group">
             <label for="EmailInput">Enter your e-mail</label>
+            {% with messages = get_flashed_messages(category_filter=["error"]) %}
+                {% if messages %}
+                    {% for msg in messages %}
+                        <div class="alert alert-danger" role="alert">
+                            {{msg}}
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
             <input type="email" name="Email_input" class="form-control" placeholder="name@bigD.com">
         </div>
         <div class="form-group">
             <label for="EmailInput">Choose your password </label>
             <input type="password" name="Pass_input" class="form-control" placeholder="Set your password">
+            {% with messages = get_flashed_messages(category_filter=["info"]) %}
+                {% if messages %}
+                    {% for msg in messages %}
+                        <div class="alert alert-danger" role="alert">
+                            {{msg}}
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
         </div>
         <div class="form-group">
             <label for="EmailInput">Enter your password again</label>

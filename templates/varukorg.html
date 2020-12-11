@@ -61,9 +61,13 @@
             <div class="amount-con col-s">
                     <div class="form-con">
                         <form method="POST">
-                            <button type="submit" class="btn btn-danger" name="removeBtn" value="{{item[0]}}">-</button>
-                            <input type="number" value="{{item[3]}}" min="1" max="123">
-                            <button type="submit" class="btn btn-danger" value="{{item[0]}}" name="addBtn">+</button>
+                            <div>
+                                <div class="input-group-prepend">
+                                    <button type="submit" class="btn btn-info" name="removeBtn" value="{{item[0]}}" style="margin-right: 5px;">-</button>
+                                    <span class="input-group-text" id="basic-addon3" style="margin-right: 5px;">{{item[3]}}</span>
+                                    <button type="submit" class="btn btn-info" value="{{item[0]}}" name="addBtn">+</button>
+                                </div>
+                            </div>
                         </form>
                     </div>
             </div>
@@ -78,7 +82,7 @@
             <button type="submit" class="btn btn-success" value = "confirmOrder" name="confirmOrderBtn"> Place order</button>
         </form> 
         <hr class="my-4">
-        <a href="/search">Continue Shopping</a>
+        <a href="/">Continue Shopping</a>
         <p class=" lead" >© 2020 YouBuyItWeSellIT Limited | All Rights Reserved. | Be a visionary</p> 
       </div>
 </div>

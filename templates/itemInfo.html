@@ -22,105 +22,69 @@
    {% endblock %}
 
 {% block body %}
-
 <div>
-
-    <h1>{{product[1]}}</h1>
-    
-    <img src={{"../static/images/ITEM_" + product[0]|string + ".jpg"}} style="width:320px;height:240px;"> 
-    {{product[4]}}
-    <form method = "POST">
-        <div>
-            <button type="submit" name="addBtn" value="{{product[0]}}">
-                Add 1
-            </button>
-            <button type="submit" name="removeBtn" value="{{product[0]}}">
-                Remove 1
-            </button>
-            Average grade: {{gradeAvg}}
-        </div>
-
-        <div>
-        Make a comment! <input type="text" name="commentBox" size=150>
-        </div>
-        Give a grade! <input type="number" min="1" max="5" name="gradeBox">
-        <div>
-        <button type="submit" name="reviewBtn" value="reveiwBtn" > Send review
-        </div>
-    </form>
-
-    <div>
-        {% for grade in grades %}
-            <div class="comments">
-                <div>
-                    Grade: {{grade[2]}}
-                </div>
-                <div>
-                    Comment: {{grade[3]}}
-                </div>
-                
-                
-            </div>
-
-        {% endfor %}
-
-
-    </div>
-    <div class="jumbotron">
+    <div class="jumbotron container">
         <h1 class="display-4">{{product[1]}}</h1>
         <p class="lead">{{product[4]}}</p>
-        <img src={{"../static/images/ITEM_" + product[0]|string + ".jpg"}} style="width:320px;height:240px;">
+        <img class="img-thumbnail" src={{"../static/images/ITEM_" + product[0]|string + ".jpg"}} style="width:320px;height:240px;">
         <form method = "POST" style="padding-top: 10px;">
             <div>
-                Price: {{product[2]}} kr 
-                <button type="submit" class="btn btn-primary btn-lg" name="addBtn" value="{{product[0]}}">
-                    Add to cart
-                </button>
+                <div class="input-group-prepend">
+                    <span class="input-group-text" id="basic-addon3" style="margin-right: 10px;">Price: {{product[2]}} kr</span>
+                    <button type="submit" class="btn btn-info" name="addBtn" value="{{product[0]}}"> Add to cart </button>
+                </div>
+                <div class="input-group-prepend">
+                    <span class="input-group-text" id="basic-addon3" style="margin-top: 10px;">In stock: {{product[3]}}</span>
+                </div>
             </div>
         </form>
         <hr class="my-4">
 
         <form method = "POST">
-            <div>
-            Make a comment! <input type="text" name="commentBox" size=150>
+            <div class="input-group mb-3">
+                <div class="input-group-prepend">
+                  <span class="input-group-text" id="basic-addon3">Make a comment</span>
+                </div>
+                <input type="text" class="form-control" id="basic-url" aria-describedby="basic-addon3" name="commentBox">
             </div>
-            Give a grade! 
-            <div class="form-check form-check-inline">
-                <input class="form-check-input" type="radio" name="gradeBox" id="inlineRadio1" value="1">
-                <label class="form-check-label" for="inlineRadio1">1</label>
-                <input class="form-check-input" type="radio" name="gradeBox" id="inlineRadio2" value="2">
-                <label class="form-check-label" for="inlineRadio2">2</label>
-                <input class="form-check-input" type="radio" name="gradeBox" id="inlineRadio3" value="3">
-                <label class="form-check-label" for="inlineRadio3">3</label>
-                <input class="form-check-input" type="radio" name="gradeBox" id="inlineRadio4" value="4">
-                <label class="form-check-label" for="inlineRadio4">4</label>
-                <input class="form-check-input" type="radio" name="gradeBox" id="inlineRadio5" value="5">
-                <label class="form-check-label" for="inlineRadio5">5</label>
+            <div class="input-group mb-3">
+                <div class="input-group-prepend">
+                  <span class="input-group-text" id="basic-addon3">Give a grade: </span>
+                </div>
+                <div class="form-check form-check-inline" style="padding-right: 20px;">
+                    {% for x in range(1,6) %}
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="gradeBox" id="inlineRadio{{x}}" value="{{x}}" checked>
+                            <label class="form-check-label" for="inlineRadio1"> {{x}}</label>
+                        </div>
+                    {% endfor %}
+                </div>
             </div>
             <br>
-            <button type="submit" name="reviewBtn" value="reveiwBtn" > Send review
-            </div>
+            <button type="submit" name="reviewBtn" class="btn btn-info" value="reveiwBtn" > Send review </button>
         </form>
-
-        <p>This is what other people think about {{product[1]}}</p>
-        Average grade: {{gradeAvg}}
-        <p class="lead">
-            {% for grade in grades %}
-            <div class="card bg-light mb-3" style="max-width: 25rem;">
-                <div class="card-header">Grade: {{grade[2]}}</div>
-                <div class="card-body">
-                  <h5 class="card-title">Comment:</h5>
-                  <p class="card-text">{{grade[3]}}</p>
-                </div>
-              </div>
-            {% endfor %}
-            
-        </p>
+        <br>
+        <div>
+            <h3>This is what other people think about {{product[1]}}</h3>
+            <hr class="my-4">
+            <b>Average grade: {{gradeAvg}}</b>
+            <p class="lead">
+                {% for grade in grades %}
+                    <div class="card bg-light mb-3" style="max-width: 25rem;">
+                        <div class="card-header">
+                            Grade: {{grade[2]}}
+                        </div>
+                        <div class="card-body">
+                            <h5 class="card-title">Comment:</h5>
+                            <p class="card-text">{{grade[3]}}</p>
+                        </div>
+                    </div>
+                {% endfor %}            
+            </p>
+        </div>
     </div>
-    
-
 </div>
-
+<!--
 
 
 
@@ -129,5 +93,5 @@
 
  
    </div>
-
+-->
 {% endblock %}

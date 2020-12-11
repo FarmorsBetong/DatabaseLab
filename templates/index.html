@@ -17,6 +17,15 @@
 
 
 <div class="container-sm costum-con"> <!-- Start of container div for accordion -->
+  {% with messages = get_flashed_messages(category_filter=["info"]) %}
+    {% if messages %}
+      {% for msg in messages %}
+        <div class="alert alert-info" role="alert">
+          {{msg}}
+        </div>
+      {% endfor %}
+    {% endif %}
+  {% endwith %}
   <div class="accordion" id="accordionExample"> <!-- Start of Acordion -->
     {% for item in items %}
     <div class="card">
@@ -32,9 +41,14 @@
           <div class="row row-cols-2">
               <div class="col">{{item[4]}}
                 <br><br>
-                <button type="button" class="btn btn-primary" href="">Add to cart</button>
-                <button type="button" class="btn btn-primary" href="">Info</button>
-                <p></p>Price: {{item[2]}} kr</p> <!--Price of article-->
+                <form method = "POST" style="padding-top: 10px;">
+                  <div>
+                      <div class="input-group-prepend">
+                          <span class="input-group-text" id="basic-addon3" style="margin-right: 10px;">Price: {{item[2]}} kr</span>
+                          <button type="submit" class="btn btn-info" href="" value="{{item[0]}}" name="info_btn">Info</button>
+                      </div>
+                  </div>
+                </form>
               </div>
               <div class="col-6">
                 <img class="pic img-thumbnail" src={{"../static/images/ITEM_" + item[0]|string + ".jpg"}}>

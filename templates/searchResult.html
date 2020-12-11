@@ -1,45 +1,39 @@
 {% extends 'search.html' %}
 {% block head %}
-<style>
-    .box {
-        background-color: gray;
-        border: 2px solid black;
-        margin: 20px;
-        padding: 20px;
-        margin-right: 40px;
+    <style>
+        .box {
+            background-color: gray;
+            border: 2px solid black;
+            margin: 20px;
+            padding: 20px;
+            margin-right: 40px;
 
-    }
-</style>
-   {% endblock %}
+        }
+    </style>
+{% endblock %}
 {% block body %}
     <div class="container">
         <h1 class="lead"> Search results for {{search}} </h1>
     </div>
-   <div class = container>
-    
-    {% for item in products %}
-    <form action="" method ="POST">
-
-            <div class = "box" value = {{item[0]}}>
-                Artikel: {{ item[1]}}
-                <img src={{"../static/images/ITEM_" + item[0]|string + ".jpg"}} style="width:160px;height:120px;">
-                <button type="submit" name="addBtn" value="{{item[0]}}">
-                    Add 1
-                </button>
-                <button type="submit" name="removeBtn" value="{{item[0]}}">
-                    Remove 1
-                </button>
-                
-                <button type="submit" name="itemInfo" value="{{item[0]}}">
-                    Item info
-                </button>
+    <div class = container>
+        {% for item in products %}
+            <div class="jumbotron">
+                <h1 class="display-4">{{item[1]}}</h1>
+                <p class="lead">{{item[4]}}</p>
+                <hr class="my-4">
+                <img src={{"../static/images/ITEM_" + item[0]|string + ".jpg"}} style="width:320px;height:240px;" class="img-thumbnail">
+                <form method = "POST" style="padding-top: 10px;">
+                    <div>
+                        <div class="input-group-prepend">
+                            <span class="input-group-text" id="basic-addon3" style="margin-right: 10px;">Price: {{item[2]}} kr</span>
+                            <button type="submit" class="btn btn-info" name="addBtn" value="{{item[0]}}" style="margin-right: 10px;">
+                             Add to cart </button>
+                            <button type="submit" class="btn btn-info" name="itemInfo" value="{{item[0]}}"> Info </button>
+                        </div>
+                    </div>
+                </form>
             </div>
-
-        
-        </form>
-    {% endfor %}
- 
-   </div>
-
+        {% endfor %}
+    </div>
 {% endblock %}
 
