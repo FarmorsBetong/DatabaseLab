@@ -28,7 +28,17 @@ def createTables():  #<-- bättre att ha ne funktion för att göra tables //Joh
         money INT NOT NULL DEFAULT '0',
         PRIMARY KEY(userID))
         ''')
-                    
+
+    # +-------------------------------articles--------------------------------+                
+    # +----------------+--------------+------+-----+---------+----------------+
+    # | Field          | Type         | Null | Key | Default | Extra          |
+    # +----------------+--------------+------+-----+---------+----------------+
+    # | article_number | int unsigned | NO   | PRI | NULL    | auto_increment |
+    # | article_name   | varchar(100) | NO   |     | NULL    |                |
+    # | price          | int          | NO   |     | NULL    |                |
+    # | amount         | int          | NO   |     | NULL    |                |
+    # | info           | varchar(200) | YES  |     | NULL    |                |
+    # +----------------+--------------+------+-----+---------+----------------+
     cur.execute('''CREATE TABLE IF NOT EXISTS articles(
         article_number INT UNSIGNED AUTO_INCREMENT NOT NULL,
         article_name VARCHAR(100) NOT NULL,
@@ -96,7 +106,7 @@ def search():
 
 
 @app.route('/search/<string:res>', methods = ['GET', 'POST'])
-def searchResult(res):
+def searchResult(res): #made by Johan
     if(request.method == "POST"):
         if "user" in session:
             user = session["user"]
@@ -130,7 +140,7 @@ def searchResult(res):
 
 
 
-def confirmOrder(): #bekräfta ordern
+def confirmOrder(): #bekräfta ordern #made by Johan
 
     cur = conn.cursor()
     user = session["user"]
@@ -150,18 +160,34 @@ def confirmOrder(): #bekräfta ordern
 
     conn.commit()
 
-    #transaction(user, )
-
 
     cur.close()
     return
 
-def removeOrder(ordNum): #ta bort en befintlig order
+def removeOrder(user, ordNum): #ta bort en befintlig order #made by Johan
     cur = conn.cursor()
-    user = session["user"]
-    cur.execute("DELETE FROM orders WHERE userID = %s AND order_number = %i"%(user, ordNum))
+    cur.execute("SELECT sum(articles.price * booked_items.amount) FROM articles, booked_items WHERE articles.article_number=booked_items.article_number AND order_number=%s",(ordNum,))
     conn.commit()
+    amount = cur.fetchone()[0]
+    if(transaction(24,user,amount)):
+
+        #hitta artiklarna och antalet av dem och öka antalet på hyllan
+        cur.execute("SELECT booked_items.article_number, booked_items.amount FROM booked_items WHERE order_number = %s",(ordNum,))
+        conn.commit()
+        articles = cur.fetchall()
+        for article in articles:
+            artID = article[0]
+            artAmount = article[1]
+            cur.execute("UPDATE articles SET articles.amount = articles.amount + %s WHERE articles.article_number = %s",(artAmount, artID,))
+            conn.commit()
+
+        cur.execute("DELETE FROM orders WHERE userID = %s AND order_number = %i"%(user, ordNum))
+        conn.commit()
+    
     cur.close()
+    #
+    #ska öka antalet artiklar på hyllan
+    #
     return
 
 @app.route('/admin', methods = ['GET', 'POST']) #admin page to add items to the database
@@ -301,8 +327,9 @@ def varukorg():
                     amount += x[2] * x[3]
         
                 cur.close()
-                if(transaction(user, amount)):
-                    confirmOrder()
+                if(sufficientFunds(amount, user)):# Is there enough money?
+                    if(transaction(user, 24, amount)):  #Can you make a transaction? 24 is the bank userID
+                        confirmOrder()
         else:
             text = request.form["searchbtn"] 
             return redirect(url_for("searchResult", res = text))
@@ -432,7 +459,7 @@ def remove_from_order(artID,user):
 
 
 #@app.route('/addGrade/<int:artID>/<int:userID>/<int:grade>')
-def addGrade(artID, userID, grade):
+def addGrade(artID, userID, grade): #made by Johan
     cur = conn.cursor()
     query = "SELECT * FROM opinion WHERE article_number = '%i' AND userID = '%i';"%(artID, userID)
     cur.execute(query)
@@ -453,17 +480,21 @@ def addGrade(artID, userID, grade):
 
 
 
-#@app.route('/add_comment/<int:articleID>/<int:userID>/<string:comment>')
+# Add a comment to an article.
 def addComment(articleID, userID, comment):
     cur = conn.cursor()
+
     query = "SELECT * FROM opinion WHERE article_number='%i' AND userID='%i';" %(articleID, userID)
     cur.execute(query)
     conn.commit()
 
+    # Check if user have already made a comment on this article.
+    # If no, create a new comment.
     if cur.fetchone() == None:
         query = "INSERT INTO opinion VALUES('%i', '%i', NULL, '%s');" %(articleID, userID, comment)
         cur.execute(query)
         conn.commit()
+    # If yes, update the comment.
     else:
         query = "UPDATE opinion SET comment='%s' WHERE article_number='%i' AND userID='%i';" %(comment, articleID, userID)
         cur.execute(query)
@@ -519,34 +550,51 @@ def itemInfo(artID):
     if(len(grades) == 0):
         gradeAvg = 0
     else:
-        gradeAvg = gradeSum/len(grades)
+        gradeAvg = round(gradeSum/len(grades),2)
     cur.close()
     return render_template("itemInfo.html", product = product, grades = grades, gradeAvg = gradeAvg)
 
 
-def transaction(looser,amount):
-    gainer = 24
+def transaction(looser, gainer,amount): #made by Johan
+    #gainer = 24, this is the userID for the bank
     cur = conn.cursor()
     try:
         query = "START TRANSACTION"
         cur.execute(query)
 
-        query = "UPDATE users SET money = money - %i WHERE userID = %s"%(amount, looser)#someone looses money
+        query = "UPDATE users SET money = money - %s WHERE userID = %s"%(amount, looser)#someone looses money
         cur.execute(query)
 
-        query = "UPDATE users SET money = money + %i WHERE userID = %s"%(amount, gainer)#the bank gains money
+        query = "UPDATE users SET money = money + %s WHERE userID = %s"%(amount, gainer)#someone gains money
+        cur.execute(query)
+
+        query = "COMMIT"
         cur.execute(query)
 
         conn.commit()
         cur.close()
         return True
     except:
+        
         conn.rollback()
         cur.close()
         return False
+
+def sufficientFunds(amount, user): #checks if there is enough money in the account to purchase #made by Johan
+    cur = conn.cursor()
+    query = "SELECT money FROM users WHERE userID = %s"%(user)
+    cur.execute(query)
+    conn.commit()
+    currAmount = cur.fetchone()
+    #if the users lacks sufficient funds
+    if(amount > currAmount[0]):
+        return False
+    cur.close()
+    return True
+
     
 
-def addMoney(amount, user):
+def addMoney(amount, user): #made by Johan
     cur = conn.cursor()
     query = "UPDATE users SET money = money + %i WHERE userID = %s"%(amount, user)
     cur.execute(query)
@@ -555,7 +603,7 @@ def addMoney(amount, user):
     return
 
 
-def removeMoney(amount, user):
+def removeMoney(amount, user): #made by Johan
     cur = conn.cursor()
     query = "SELECT money FROM users WHERE userID = %s"%(user)
     cur.execute(query)
@@ -570,6 +618,30 @@ def removeMoney(amount, user):
     cur.close()
     return
     
+def decreaseArticle(artID, amount): #made by Johan 
+    if(amount < 0):
+        return
+
+    cur = conn.cursor()
+    query = "UPDATE articles SET amount = amount - %s WHERE article_number=%s"%(amount, artID)
+    cur.execute(query)
+    conn.commit()
+
+    cur.close()
+    return
+
+
+def increaseArticle(artID, amount): #made by Johan
+    if(amount < 0):
+        return
+
+    cur = conn.cursor()
+    query = "UPDATE articles SET amount = amount + %s WHERE article_number=%s"%(amount, artID)
+    cur.execute(query)
+    conn.commit()
+
+    cur.close()
+    pass
 
 # -----------      Profile routes --------------
 
@@ -605,12 +677,10 @@ def profile():
             oldPass = request.form['Password']
             newPass = request.form['newPassword']
             newPassAgain = request.form['newPasswordAgain']
-            print("hallå")
             query = "SELECT users.password FROM users WHERE userID='%s'" %(session['user'])
             cur.execute(query)
             conn.commit()
             currentPass = cur.fetchone()[0]
-            print(currentPass)
 
             if(currentPass == oldPass):
                 if(newPass == newPassAgain):
@@ -618,6 +688,7 @@ def profile():
                     query = "UPDATE users SET password = '%s' WHERE userID ='%s'" %(newPass,session['user'])
                     cur.execute(query)
                     conn.commit()
+                    flash("The password was successfully changed!")
                 else:
                     flash("The password doesn't match!")
             else:
@@ -631,6 +702,7 @@ def profile():
     return render_template('profile.html', userInfo = userinfo)
 
 
+# Shows all the user´s orders.
 @app.route('/profile/orders', methods = ['GET', 'POST'])
 def profileOrders():
     cur = conn.cursor()
@@ -641,37 +713,113 @@ def profileOrders():
 
     if(request.method == 'POST'):
         ordNr = int(request.form['remove_order'])
-        removeOrder(ordNr)
+        removeOrder(user, ordNr)
 
+    # Retrive all order numbers the user have. 
     query = "SELECT order_number FROM orders WHERE userID='%i' AND order_placed=1;" %(user)
     cur.execute(query)
     conn.commit()
     orderNr = cur.fetchall()
-
-
     orders = []
-    total = 0
-    totalAmountOrders =  []
+
+    # Retrive all the information from all the orders.
     for orderNum in orderNr:
-        #orders.append(orderNum[0])
-        query = "SELECT articles.article_number, articles.article_name, articles.price, booked_items.amount, booked_items.order_number FROM booked_items INNER JOIN articles ON booked_items.article_number=articles.article_number WHERE booked_items.order_number='%i';" %(orderNum[0])
+        # +----------------+---------------+---------+--------+--------------+------------+-------------+
+        # | article_number | article_name  | price   | amount | order_number | item total | order total |
+        # +----------------+---------------+---------+--------+--------------+------------+-------------+
+        query = ''' SELECT articles.article_number,
+                        articles.article_name,
+                        articles.price,
+                        booked_items.amount,
+                        booked_items.order_number,
+                        (articles.price * booked_items.amount) AS 'item total',
+                        (SELECT SUM(articles.price * booked_items.amount)
+                            FROM articles, booked_items
+                            WHERE articles.article_number=booked_items.article_number AND order_number='%i') AS 'order total'
+                    FROM booked_items
+                    INNER JOIN articles ON booked_items.article_number=articles.article_number
+                    WHERE booked_items.order_number='%i';''' %(orderNum[0], orderNum[0])
+        
         cur.execute(query)
         conn.commit()
         order = cur.fetchall()
-        orders.append(order)
+        orders.append(order) 
 
-        # Calulate the total price of one order.
+    cur.close()
+    return render_template('profileOrders.html', orders = orders)
+
+@app.route('/allOrders', methods = ['GET','POST'])
+def allOrders():
+    cur = conn.cursor()
+    if "user" in session:
+        user = session["user"]
+    else:
+        return redirect(url_for("login"))
+
+    if(request.method == 'POST'):
+        ordNr = int(request.form['remove_order'])
+        cur.execute("SELECT userID FROM orders WHERE order_number=%s",(ordNr,))
+        conn.commit()
+        us = cur.fetchone()[0]
+        removeOrder(us,ordNr)
+
+    # Retrive all order numbers the user have. 
+    query = "SELECT order_number FROM orders WHERE order_placed=1;"
+    cur.execute(query)
+    conn.commit()
+    orderNr = cur.fetchall()
+    orders = []
+
+    # Retrive all the information from all the orders.
+    for orderNum in orderNr:
+        # +----------------+---------------+---------+--------+--------------+------------+-------------+
+        # | article_number | article_name  | price   | amount | order_number | item total | order total |
+        # +----------------+---------------+---------+--------+--------------+------------+-------------+
+        query = ''' SELECT articles.article_number,
+                        articles.article_name,
+                        articles.price,
+                        booked_items.amount,
+                        booked_items.order_number,
+                        (articles.price * booked_items.amount) AS 'item total',
+                        (SELECT SUM(articles.price * booked_items.amount)
+                            FROM articles, booked_items
+                            WHERE articles.article_number=booked_items.article_number AND order_number='%i') AS 'order total',
+                        (SELECT userID FROM orders WHERE order_number='%i') AS userID
+                    FROM booked_items
+                    INNER JOIN articles ON booked_items.article_number=articles.article_number
+                    WHERE booked_items.order_number='%i';''' %(orderNum[0], orderNum[0], orderNum[0])
         
-        for item in order:
-            total += item[2] * item[3]
-        totalAmountOrders.append(total)
-        total = 0
+        cur.execute(query)
+        conn.commit()
+        order = cur.fetchall()
+        orders.append(order) 
 
+    cur.close()
+    #return render_template('profileOrders.html', orders = orders)
+    return render_template('allOrders.html', orders = orders)
+
+
+@app.route('/addArticle', methods = ['GET','POST'])
+def addArticles():
+    if(request.method == 'POST'):
+        if(request.form.get("submitAdd")):
+            product = request.form.get('article')
+            amount = request.form['addAmount']
+            increaseArticle(product,int(amount))
+        else:
+            product = request.form.get('article')
+            amount = request.form['removeAmount']
+            decreaseArticle(product,int(amount))
+
+    cur = conn.cursor()
+    query = "Select * from articles"
+    cur.execute(query)
+    conn.commit()
+    articles = cur.fetchall()
     
+    return render_template('addArticle.html', articles = articles)   
 
 
-    return render_template('profileOrders.html', orders = orders, totalPrice = totalAmountOrders)
-    
 @app.route('/overview', methods = ['GET', 'POST'])
 def overview():
     cur = conn.cursor()

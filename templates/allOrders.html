@@ -1,10 +1,7 @@
-{% extends 'profile.html' %}
+{% extends 'baseUserprofile.html' %}
 
 {% block head %}
 <style>
-    .order-info{
-        height: 50px;
-    }
     .wrapper{
         width: 70%;
         margin: auto;
@@ -17,9 +14,6 @@
         -webkit-box-shadow: 0px 0px 5px 0px #000000; 
     box-shadow: 0px 0px 5px 0px black;
     }
-    table{
-        border-radius: 3px;
-    }
 </style>
 {% endblock %}
 
@@ -30,8 +24,9 @@
     <div class="jumbotron wrapper">
         <div class="order-info">
             <h1>Order number: {{order[0][4]}}</h1>
+            <h1>UserID: {{order[0][7]}}</h1>
         </div>
-        <hr class="my-4">   
+        <hr class="my-4">
             <table class="table table-dark table-striped">
                 <tr>
                     <th>Article</th>

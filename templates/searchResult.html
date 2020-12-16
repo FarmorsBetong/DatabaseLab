@@ -9,11 +9,23 @@
             margin-right: 40px;
 
         }
+        .jumbotron{
+            margin-top: 5%;
+            -webkit-box-shadow: 0px 0px 5px 0px #000000; 
+            box-shadow: 0px 0px 5px 0px black;
+        }
+        h1,.lead,.info{
+            text-align: center;
+            margin: auto;
+        }
+        .search-header{
+            margin-top: 5%;
+        }
     </style>
 {% endblock %}
 {% block body %}
     <div class="container">
-        <h1 class="lead"> Search results for {{search}} </h1>
+        <h1 class="lead search-header"> Search results for {{search}} </h1>
     </div>
     <div class = container>
         {% for item in products %}
@@ -21,17 +33,21 @@
                 <h1 class="display-4">{{item[1]}}</h1>
                 <p class="lead">{{item[4]}}</p>
                 <hr class="my-4">
-                <img src={{"../static/images/ITEM_" + item[0]|string + ".jpg"}} style="width:320px;height:240px;" class="img-thumbnail">
-                <form method = "POST" style="padding-top: 10px;">
-                    <div>
-                        <div class="input-group-prepend">
-                            <span class="input-group-text" id="basic-addon3" style="margin-right: 10px;">Price: {{item[2]}} kr</span>
-                            <button type="submit" class="btn btn-info" name="addBtn" value="{{item[0]}}" style="margin-right: 10px;">
-                             Add to cart </button>
-                            <button type="submit" class="btn btn-info" name="itemInfo" value="{{item[0]}}"> Info </button>
+                <div class="info">
+                    <img src={{"../static/images/ITEM_" + item[0]|string + ".jpg"}} style="width:320px;height:240px;" class="img-thumbnail">
+                    <hr class="my-4">
+                    <form method = "POST" style="padding-top: 10px;">
+                        <div>
+                            <div class="input-group-prepend">
+                                <span class="input-group-text" id="basic-addon3" style="margin-right: 10px;">Price: {{item[2]}} kr</span>
+                                <button type="submit" class="btn btn-info" name="addBtn" value="{{item[0]}}" style="margin-right: 10px;">
+                                Add to cart </button>
+                                <button type="submit" class="btn btn-info" name="itemInfo" value="{{item[0]}}"> Info </button>
+                            </div>
                         </div>
-                    </div>
-                </form>
+                    </form>
+                </div>
+                
             </div>
         {% endfor %}
     </div>

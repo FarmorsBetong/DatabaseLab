@@ -9,25 +9,28 @@
     width: 100%;
     border: 1px solid grey;
     border-radius: 5px;
-    -webkit-box-shadow: 0px 0px 32px 0px #000000; 
-    box-shadow: 0px 0px 32px 0px #000000;
+    -webkit-box-shadow: 0px 0px 5px 0px #000000; 
+    box-shadow: 0px 0px 5px 0px black;
 }
 .img-div{
-    
-    height:auto;
+    height: 200%;
+    padding-top: 20px;
+    margin-bottom: 10%;
 }
-.info-container{
-    
-}
+
 .costum-table{
     margin: auto;
     margin-top: 10%;
 }
+.card{
+  margin-top: 3%;
+}
+
 </style>
 {% endblock %}
 
 {% block body %}
-<div class="container costum-container">
+<div class="container costum-container jumbotron">
     <div class="container row">
         <div class="col-s costum img-div">
             <img src="../static/images/userIcon.png" alt="">
@@ -149,5 +152,6 @@
                 {% endif %}
               {% endwith %}
     </div>
-</div>
+  </div>
+
 {% endblock %}
