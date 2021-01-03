@@ -169,6 +169,8 @@ def confirmOrder(): #bekräfta ordern #made by Johan
     cur.execute("SELECT booked_items.article_number FROM booked_items WHERE booked_items.order_number = %s",(orderNum,))
     conn.commit()
     articleIDS = cur.fetchall()
+    if(len(articleIDS) == 0):
+        return "Empty"
 
     cur.execute("BEGIN")
 
@@ -363,9 +365,12 @@ def varukorg():
 
                 if(sufficientFunds(amount, user)):# Is there enough money?
                     if(transaction(user, 24, amount)):  #Can you make a transaction? 24 is the bank userID
-                        if(not confirmOrder()):
+                        res = confirmOrder()
+                        if(not res):
                             transaction(24, user, amount)#if the order doesn't pull through
                             flash("Some item(s) are not in stock, check again")
+                        elif(res == "Empty"):
+                            flash("Can't buy an empty cart.")
         else:
             text = request.form["searchbtn"] 
             return redirect(url_for("searchResult", res = text))
