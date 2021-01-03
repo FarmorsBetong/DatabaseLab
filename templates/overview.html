@@ -11,6 +11,14 @@ table{
     -webkit-box-shadow: 0px 0px 5px 0px #000000; 
 box-shadow: 0px 0px 5px 0px black
 }
+@media screen and (max-width: 900px){
+        th,td {
+            font-size: 6px;
+        }
+        h1{
+            font-size: 20px;
+        }
+    }
 </style>
 {% endblock %}
 {% block body %}
@@ -24,6 +32,7 @@ box-shadow: 0px 0px 5px 0px black
                 <th scope="col">Firstname</th>
                 <th scope="col">Lastname</th>
                 <th scope="col">Email</th>
+                <th scope="col">Money</th>
                 
                
               </tr>
@@ -35,6 +44,7 @@ box-shadow: 0px 0px 5px 0px black
                 <td class="col-s">{{user[1]}}</td>
                 <td class="col-s">{{user[2]}}</td>
                 <td class="col-s">{{user[3]}}</td>
+                <td class="col-s">{{user[6]}}:-</td>
               </tr>
               {% endfor %}
             </tbody>

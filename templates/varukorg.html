@@ -41,6 +41,7 @@
         <div class="container intro row">
             <div class="col">
                 <h1 class="display-4">Shopping cart!</h1>
+                
             </div>
             <div class="col">
                 <img src="../static/images/shoppin.jpg" id=shopcart class="img-thumbnail float-right shopcartImg" width="200px">
@@ -51,7 +52,7 @@
         <div class="item-con row">
             <div class="img-con col-xs-6">
                 <a href="">
-                    <img class="shopcartImg img-thumbnail rounded float-left"" src={{"../static/images/ITEM_" + item[0]|string + ".jpg"}} width="200px">
+                    <img class="shopcartImg img-thumbnail rounded float-left"" src={{"../static/images/articles/" + item[3]|string}} width="200px">
                 </a>
             </div>
             <div class="info col">
@@ -66,7 +67,7 @@
                             <div>
                                 <div class="input-group-prepend">
                                     <button type="submit" class="btn btn-info" name="removeBtn" value="{{item[0]}}" style="margin-right: 5px;">-</button>
-                                    <span class="input-group-text" id="basic-addon3" style="margin-right: 5px;">{{item[3]}}</span>
+                                    <span class="input-group-text" id="basic-addon3" style="margin-right: 5px;">{{item[4]}}</span>
                                     <button type="submit" class="btn btn-info" value="{{item[0]}}" name="addBtn">+</button>
                                 </div>
                             </div>
@@ -78,6 +79,15 @@
         <hr class="my-4">
         {% endfor %}
         
+        {% with messages = get_flashed_messages() %}
+                {% if messages %}
+                  {% for msg in messages %}
+                    <div class="alert alert-info" role="alert">
+                      {{msg}}
+                    </div>
+                  {% endfor %}
+                {% endif %}
+              {% endwith %}
         
         <h2 class="float-right"> TOTAL: {{totalPrice}} kr</h2>
         <form method="POST">

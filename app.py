@@ -1,20 +1,31 @@
-from flask import Flask, render_template, request, redirect,url_for, session, flash
+from flask import Flask, render_template, request, redirect,url_for, session, flash, send_file
 from flaskext.mysql import MySQL
-from flask_login import LoginManager
 from datetime import datetime
+import os
 
 
 app = Flask(__name__)
 app.secret_key = "robinsnyckel"
 
+#app.register_blueprint(MySQL, url_prefix="")
+
 mysql = MySQL()
+
+
 mysql.init_app(app)
 
 
 app.config['MYSQL_DATABASE_PASSWORD'] = 'robin123'
 app.config['MYSQL_DATABASE_DB'] = 'ecommerce'
 app.config['MYSQL_DATABASE_USER'] = 'root'
+
+
+
+#Link your blueprints and specify when you want to access it    
+#app.register_blueprint(loginfile, url_prefix="/userAuthincation")
+
 conn = mysql.connect()
+
 # Create tables
 def createTables():  #<-- bättre att ha ne funktion för att göra tables //Johan
     cur = mysql.connect().cursor()
@@ -26,9 +37,10 @@ def createTables():  #<-- bättre att ha ne funktion för att göra tables //Joh
         password VARCHAR(100) NOT NULL,
         role VARCHAR(10) NOT NULL,
         money INT NOT NULL DEFAULT '0',
+        user_img VARCHAR(100),
         PRIMARY KEY(userID))
         ''')
-
+ 
     # +-------------------------------articles--------------------------------+                
     # +----------------+--------------+------+-----+---------+----------------+
     # | Field          | Type         | Null | Key | Default | Extra          |
@@ -45,6 +57,7 @@ def createTables():  #<-- bättre att ha ne funktion för att göra tables //Joh
         price INT NOT NULL,
         amount INT NOT NULL,
         info VARCHAR(200) NOT NULL,
+        image_name VARCHAR(100) NOT NULL,
         PRIMARY KEY(article_number))
         ''')
 
@@ -61,6 +74,7 @@ def createTables():  #<-- bättre att ha ne funktion för att göra tables //Joh
         order_number INT UNSIGNED NOT NULL,
         article_number INT UNSIGNED NOT NULL,
         amount INT UNSIGNED NOT NULL,
+        price INT UNSIGNED NOT NULL,
         FOREIGN KEY(order_number) REFERENCES orders(order_number) ON DELETE CASCADE,
         FOREIGN KEY(article_number) REFERENCES articles(article_number)
         )''')
@@ -92,7 +106,7 @@ def index():
     cur.execute(query)
     conn.commit()
     items = cur.fetchall()
-       
+    cur.close()
 
     return render_template('index.html', items = items)
 
@@ -144,29 +158,54 @@ def confirmOrder(): #bekräfta ordern #made by Johan
 
     cur = conn.cursor()
     user = session["user"]
-    cur.execute("SELECT article_number, amount FROM booked_items WHERE order_number = (SELECT order_number FROM orders WHERE userID=%s AND order_placed = 0)",user)
+
+
+    #get the order number
+    cur.execute("SELECT orders.order_number FROM orders WHERE order_placed = 0 AND userID = %s",(user,))
+    conn.commit()
+    orderNum = cur.fetchone()
+
+    #lock the active rows
+    cur.execute("SELECT booked_items.article_number FROM booked_items WHERE booked_items.order_number = %s",(orderNum,))
+    conn.commit()
+    articleIDS = cur.fetchall()
+
+    cur.execute("BEGIN")
+
+    for artID in articleIDS:
+        cur.execute("SELECT * FROM articles WHERE article_number=%s FOR UPDATE",(artID,))
+        conn.commit()
+
+
+    #check so that there are enough items in stock
+    cur.execute("SELECT booked_items.article_number, booked_items.amount, articles.amount FROM booked_items,articles WHERE order_number = (SELECT order_number FROM orders WHERE userID=%s AND order_placed = 0) AND booked_items.article_number = articles.article_number",user)
     conn.commit()
     articles = cur.fetchall()
-    print(articles)
-    if(len(articles) == 0):
-        return
+    for article in articles:
+        if(article[1] > article[2]):
+            return False            #if there are not enough items in stock, return False
+
+
+
+    #lower the amount on those rows
+    for article in articles:
+        cur.execute("UPDATE articles SET articles.amount = articles.amount - %s WHERE articles.article_number=%s",(article[1], article[0],))
+        conn.commit()
+
+    #make order_placed = 1
     cur.execute("UPDATE orders SET order_placed = 1 WHERE userID = %s AND order_placed = 0",user)
-    for artPair in articles:
-        art = artPair[0]
-        amount = artPair[1]
-
-        cur.execute("UPDATE articles SET amount = amount - %s WHERE article_number = %s",(amount, art))
-
-
     conn.commit()
 
 
+    cur.execute("COMMIT")
+    conn.commit()
+
     cur.close()
-    return
+    return True
 
 def removeOrder(user, ordNum): #ta bort en befintlig order #made by Johan
     cur = conn.cursor()
-    cur.execute("SELECT sum(articles.price * booked_items.amount) FROM articles, booked_items WHERE articles.article_number=booked_items.article_number AND order_number=%s",(ordNum,))
+    cur.execute("SELECT sum(booked_items.price * booked_items.amount) FROM booked_items WHERE order_number=%s",(ordNum,))
     conn.commit()
     amount = cur.fetchone()[0]
     if(transaction(24,user,amount)):
@@ -190,19 +229,6 @@ def removeOrder(user, ordNum): #ta bort en befintlig order #made by Johan
     #
     return
 
-@app.route('/admin', methods = ['GET', 'POST']) #admin page to add items to the database
-def admin():
-    if 'role' in session:
-        if session['role'] == 'admin':
-            return render_template('admin.html')
-        else:
-            return "Ge fan i att försöka ta dig till fking admin asså"
-            # return render_template('profile.html')
-    return "Ge fan i att försöka ta dig till fking admin asså"
-
-    
-
-
 @app.route('/login', methods = ['GET', 'POST']) #Made by Johan
 def login():
     if(request.method == 'POST'):
@@ -216,7 +242,6 @@ def login():
         cur = conn.cursor()
         cur.execute("SELECT password FROM users WHERE email=%s", (email,))
         conn.commit()
-
         #check password
         rv = cur.fetchone()
         #if the email does not exist
@@ -265,14 +290,13 @@ def register():
         cur.execute(query)
         conn.commit()
         allEmails = cur.fetchall()
-        print("Kolla här\n")
         for emails in allEmails:
             if email == emails[0]:
                 flash("Email: " + email + " already exists", "error")
                 return redirect(url_for("register"))
 
         if(password == password2):  
-            query = "INSERT INTO users VALUES (NULL, '%s', '%s', '%s', '%s','user','0');" %(name, surname, email, password) #bättre query, säker //Johan
+            query = "INSERT INTO users VALUES (NULL, '%s', '%s', '%s', '%s','user','0', 'NULL');" %(name, surname, email, password) #bättre query, säker //Johan
             cur.execute(query)
             conn.commit()
             cur.execute("SELECT * FROM users WHERE email=%s", (email,))
@@ -285,11 +309,14 @@ def register():
             session['email'] = user[3]
             session['role'] = user[5]
             session['money'] = user[6]
-            return render_template("index.html")
+            return redirect('/')
         else:
             flash("Thats not the same password...", "info")
             return redirect(url_for("register"))
-    return render_template('register.html')
+
+        cur.close()
+    return render_template('register.html') 
+
 
 # varukorgen
 @app.route('/varukorg', methods = ['GET', 'POST']) 
@@ -300,10 +327,10 @@ def varukorg():
         return redirect(url_for("login"))
 
     if(request.method == 'POST'):
-        #print(request.form.get("confirmOrderBtn"))
+       
         if(request.form.get("addBtn")):
             artID = int(request.form["addBtn"])
-            #print(artID)
+            
             add_to_cart(artID,user)
         elif(request.form.get("removeBtn")):
             artID = int(request.form["removeBtn"])
@@ -321,15 +348,24 @@ def varukorg():
                 cur.execute(query)
                 conn.commit()
                 allOrders = cur.fetchall()
+                #+----------------+--------------+-------+--------+
+                #| article_number | article_name | price | amount | detta är allOrders
+                #+----------------+--------------+-------+--------+
+
             
                 amount = 0
-                for x in allOrders:
-                    amount += x[2] * x[3]
-        
+                for order in allOrders:
+                    amount += order[2] * order[3]
+                    query = "UPDATE booked_items set price = '%i' WHERE order_number = '%s' AND article_number='%s';"%(order[2],orderNr,order[0])
+                    cur.execute(query)
+                    conn.commit() 
                 cur.close()
+
                 if(sufficientFunds(amount, user)):# Is there enough money?
                     if(transaction(user, 24, amount)):  #Can you make a transaction? 24 is the bank userID
-                        confirmOrder()
+                        if(not confirmOrder()):
+                            transaction(24, user, amount)#if the order doesn't pull through
+                            flash("Some item(s) are not in stock, check again")
         else:
             text = request.form["searchbtn"] 
             return redirect(url_for("searchResult", res = text))
@@ -343,14 +379,14 @@ def varukorg():
     if(orders != None):
         orderNr = orders[0]
     
-        query = "SELECT articles.article_number, articles.article_name, articles.price, booked_items.amount FROM booked_items INNER JOIN articles ON booked_items.article_number=articles.article_number WHERE booked_items.order_number='%i';" %(orderNr)
+        query = "SELECT articles.article_number, articles.article_name, articles.price, articles.image_name, booked_items.amount FROM booked_items INNER JOIN articles ON booked_items.article_number=articles.article_number WHERE booked_items.order_number='%i';" %(orderNr)
         cur.execute(query)
         conn.commit()
         allOrders = cur.fetchall()
     
         total = 0
         for x in allOrders:
-            total += x[2] * x[3]
+            total += x[2] * x[4]
    
         cur.close()
         return render_template('/varukorg.html', infoAboutItems = allOrders, totalPrice = total)
@@ -367,10 +403,17 @@ def add_to_cart(articleNum, user):
     response = cur.fetchone()
     if (response == None):
         timeStamp = datetime.now()
-        if(timeStamp.day < 10):
-            timeStamp = str(timeStamp.year) + str(timeStamp.month) + "0" + str(timeStamp.day)#måste vara i format YYYYMMDD där dagen är t.ex 27 eller 08, därav nollan just nu
-        else:
-            timeStamp = str(timeStamp.year) + str(timeStamp.month) + str(timeStamp.day)
+        timeStampDay = timeStamp.day
+        timeStampMonth = timeStamp.month
+
+        # Check if month or day is single digit. If soo, add a zero.
+        if(timeStampDay < 10):
+            timeStampDay = "0" + str(timeStamp.day)
+        if(timeStampMonth < 10):
+            timeStampMonth = "0" + str(timeStamp.month)
+        
+        # Set up timeStap fro when the order i created.
+        timeStamp = str(timeStamp.year) + timeStampMonth + timeStampDay
         
         # Skapa en ny aktiv order.
         query = "INSERT INTO orders VALUES(null, '%s', '%s', 0);" %(user, timeStamp)
@@ -399,7 +442,7 @@ def add_to_cart(articleNum, user):
             return 
 
         # Lägg till vara till ordern.
-        query = "INSERT INTO booked_items VALUES('%s', '%s', 1);" %(orderNum, articleNum)
+        query = "INSERT INTO booked_items VALUES('%s', '%s', 1, 0);" %(orderNum, articleNum)
         cur.execute(query)
         conn.commit()
     else:
@@ -588,6 +631,7 @@ def sufficientFunds(amount, user): #checks if there is enough money in the accou
     currAmount = cur.fetchone()
     #if the users lacks sufficient funds
     if(amount > currAmount[0]):
+        flash("You don't have enough money to buy these products!")
         return False
     cur.close()
     return True
@@ -596,9 +640,19 @@ def sufficientFunds(amount, user): #checks if there is enough money in the accou
 
 def addMoney(amount, user): #made by Johan
     cur = conn.cursor()
-    query = "UPDATE users SET money = money + %i WHERE userID = %s"%(amount, user)
+    #Made by Robin 
+    query = "SELECT money FROM users WHERE userID = %s"%(user)
     cur.execute(query)
     conn.commit()
+    currAmount = cur.fetchone()
+    #if the users lacks sufficient funds
+    val = int(currAmount[0] + amount)
+    if(abs(val) <= 0x0FFFFFFF):
+        query = "UPDATE users SET money = money + %i WHERE userID = %s"%(amount, user)
+        cur.execute(query)
+        conn.commit()
+    else:
+        flash("The amount you tried to add is to large for a 32 bit signed interger, try something smaller")
     cur.close()
     return
 
@@ -611,6 +665,7 @@ def removeMoney(amount, user): #made by Johan
     currAmount = cur.fetchone()
     #if the users lacks sufficient funds
     if(amount > currAmount[0]):
+        flash("You can remove money you don't have...")
         return
     query = "UPDATE users SET money = money - %i WHERE userID = %s"%(amount, user)
     cur.execute(query)
@@ -645,33 +700,52 @@ def increaseArticle(artID, amount): #made by Johan
 
 # -----------      Profile routes --------------
 
+app.config["USER_IMAGE_UPLOADS"] = "/home/johansnurre/databasprojekt/static/images/userImages"
+
 @app.route('/profile', methods = ['GET', 'POST'])
 def profile():
     #
     #om ens user-role är admin bör en adminsida returneras istället
     #
+    if "user" in session:
+        user = session["user"]
+    else:
+        return redirect(url_for("login"))
     cur = conn.cursor()
-    
 
     if(request.method == 'POST'):
         if(request.form.get("submitUser")):
             fname = request.form["fname"]
             lname = request.form["lname"]
             email = request.form["email"]
-            query = "UPDATE users SET firstname = '%s', surname = '%s', email = '%s' WHERE userID ='%s'" %(fname,lname,email,session['user'])
-            cur.execute(query)
-            conn.commit()
-            session['name'] = fname
-            session['surname'] = lname
+            userImg = request.files["inputFile"]
+
+            if(len(userImg.filename) > 200 ):
+                flash("This image name is way to long!")
+            
+            else:
+                #Ifall ingen ny profil bild har lagts till vid inputfile så skippar vi uppdatering av filen
+                if(userImg.filename == ''):
+                    query = "UPDATE users SET firstname = '%s', surname = '%s', email = '%s' WHERE userID ='%s'" %(fname,lname,email,session['user'])
+                else:
+                    query = "UPDATE users SET firstname = '%s', surname = '%s', email = '%s', user_img = '%s' WHERE userID ='%s'" %(fname,lname,email,userImg.filename,session['user'])
+                    print("Vi kör detta alltså")
+                    userImg.save(os.path.join(app.config["USER_IMAGE_UPLOADS"], userImg.filename))
+                cur.execute(query)
+                conn.commit()
+                session['name'] = fname
+                session['surname'] = lname
+            
+
         elif(request.form.get("addMoneyBtn")):
             amount = int(request.form["makeMoney"])
+            
 
             if(amount > 0):
                 addMoney(amount,session["user"])
             else:
                 amount = -amount
                 removeMoney(amount,session["user"])
-                session['money'] = amount
         elif(request.form.get("submitPass")):
             request.form['Password']
             oldPass = request.form['Password']
@@ -694,10 +768,11 @@ def profile():
             else:
                 flash("You entered the wrong password!")
 
-    query = "Select users.firstname, users.surname, users.email, users.money from users where userID='%i'" %(session['user'])
+    query = "Select users.firstname, users.surname, users.email, users.money, users.user_img from users where userID='%i'" %(session['user'])
     cur.execute(query)
     conn.commit()
     userinfo = cur.fetchone()
+    print(userinfo)
     cur.close()
     return render_template('profile.html', userInfo = userinfo)
 
@@ -720,6 +795,7 @@ def profileOrders():
     cur.execute(query)
     conn.commit()
     orderNr = cur.fetchall()
+    print(orderNr)
     orders = []
 
     # Retrive all the information from all the orders.
@@ -729,11 +805,11 @@ def profileOrders():
         # +----------------+---------------+---------+--------+--------------+------------+-------------+
         query = ''' SELECT articles.article_number,
                         articles.article_name,
-                        articles.price,
+                        booked_items.price,
                         booked_items.amount,
                         booked_items.order_number,
-                        (articles.price * booked_items.amount) AS 'item total',
-                        (SELECT SUM(articles.price * booked_items.amount)
+                        (booked_items.price * booked_items.amount) AS 'item total',
+                        (SELECT SUM(booked_items.price * booked_items.amount)
                             FROM articles, booked_items
                             WHERE articles.article_number=booked_items.article_number AND order_number='%i') AS 'order total'
                     FROM booked_items
@@ -744,8 +820,10 @@ def profileOrders():
         conn.commit()
         order = cur.fetchall()
         orders.append(order) 
+        #query = "Select order_cost from orders where order_number "
 
     cur.close()
+    print(orders)
     return render_template('profileOrders.html', orders = orders)
 
 @app.route('/allOrders', methods = ['GET','POST'])
@@ -777,11 +855,11 @@ def allOrders():
         # +----------------+---------------+---------+--------+--------------+------------+-------------+
         query = ''' SELECT articles.article_number,
                         articles.article_name,
-                        articles.price,
+                        booked_items.price,
                         booked_items.amount,
                         booked_items.order_number,
-                        (articles.price * booked_items.amount) AS 'item total',
-                        (SELECT SUM(articles.price * booked_items.amount)
+                        (booked_items.price * booked_items.amount) AS 'item total',
+                        (SELECT SUM(booked_items.price * booked_items.amount)
                             FROM articles, booked_items
                             WHERE articles.article_number=booked_items.article_number AND order_number='%i') AS 'order total',
                         (SELECT userID FROM orders WHERE order_number='%i') AS userID
@@ -798,30 +876,81 @@ def allOrders():
     #return render_template('profileOrders.html', orders = orders)
     return render_template('allOrders.html', orders = orders)
 
+#config routen för att spara artikle bilderna
+app.config["ARTICLE_IMAGE_UPLOADS"] = "/home/johansnurre/databasprojekt/static/images/articles"
 
 @app.route('/addArticle', methods = ['GET','POST'])
 def addArticles():
+    if "user" in session:
+        user = session["user"]
+    else:
+        return redirect(url_for("login"))
+    
+    cur = conn.cursor()
+
     if(request.method == 'POST'):
         if(request.form.get("submitAdd")):
-            product = request.form.get('article')
-            amount = request.form['addAmount']
-            increaseArticle(product,int(amount))
+            try:
+                product = request.form.get('article')
+                amount = request.form['addAmount']
+                increaseArticle(product,int(amount))
+                flash("Successfully added " + amount + " product(s)", "success")
+            except:
+                flash("Not valid input, must be a number!", "error")
+        elif(request.form.get("submitRemove")):
+            try:
+                product = request.form.get('article')
+                amount = request.form['removeAmount']
+                decreaseArticle(product,int(amount))
+                flash("Successfully removed " + amount + " product(s)", "success")
+            except:
+                flash("Not valid input, must be a number!", "error")
+        elif(request.form.get("submitPrice")):
+            try:
+                product = request.form.get('article')
+                newPrice = request.form['changePrice']
+                query = "UPDATE articles SET price='%i' WHERE article_number='%i'" %(int(newPrice), int(product))
+                cur.execute(query)
+                conn.commit()
+                flash("Successfully changed the price to " + newPrice + " :-", "success")
+            except:
+                flash("Not valid input, must be a number!", "error")
         else:
-            product = request.form.get('article')
-            amount = request.form['removeAmount']
-            decreaseArticle(product,int(amount))
+            try:
+                articleName = request.form['articleName']
+                articlePrice = request.form['articlePrice']
+                aricleStock = request.form['articleStock']
+                articeInfo = request.form['articleInfo']
+                image = request.files['inputFile']
 
-    cur = conn.cursor()
+                query = "INSERT INTO articles values (NULL, '%s', '%s', '%s', '%s', '%s')" %(articleName,articlePrice,aricleStock,articeInfo,image.filename)
+                cur.execute(query)
+                conn.commit()
+                #sparar filen till den konfiguerade pathwayen på servern, samt väljer namnet på filen.
+                image.save(os.path.join(app.config["ARTICLE_IMAGE_UPLOADS"], image.filename))
+                print("image saved")
+            except:
+                flash("Not valid input!", "error")
+
+            
+
+    
     query = "Select * from articles"
     cur.execute(query)
     conn.commit()
     articles = cur.fetchall()
+
+    cur.close()
     
     return render_template('addArticle.html', articles = articles)   
 
 
 @app.route('/overview', methods = ['GET', 'POST'])
 def overview():
+    if "user" in session:
+        user = session["user"]
+    else:
+        return redirect(url_for("login"))
     cur = conn.cursor()
     query = "Select * from users where role='user';"
     cur.execute(query)

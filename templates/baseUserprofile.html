@@ -50,6 +50,16 @@
   margin-left: 0;
 }
 
+.sidebar-heading{
+    color: white;
+  }
+  .list-group-item{
+    color: white;
+  }
+  a{
+    color: white;
+
+
 @media (min-width: 768px) {
   #sidebar-wrapper {
     margin-left: 0;
@@ -63,14 +73,7 @@
   #wrapper.toggled #sidebar-wrapper {
     margin-left: -15rem;
   }
-  .sidebar-heading{
-    color: white;
-  }
-  .list-group-item{
-    color: white;
-  }
-  a{
-    color: white;
+ 
   }
 }
 </style>
@@ -93,7 +96,6 @@
         {% if session['role'] == 'user' %}
         <a href="/profile" class="list-group-item list-group-item-action bg-dark">Profile</a>
         <a href="/profile/orders" class="list-group-item list-group-item-action bg-dark">Orders</a>
-        <a href="/dashboard" class="list-group-item list-group-item-action bg-dark">Status</a>
         {% else %}
         <a href="/profile" class="list-group-item list-group-item-action bg-dark">Profile</a>
         <a href="/profile/orders" class="list-group-item list-group-item-action bg-dark">Orders</a>

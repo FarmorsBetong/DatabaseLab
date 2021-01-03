@@ -5,19 +5,17 @@
 .costum-div{
     margin: auto;
     margin-top: 6%;
+    -webkit-box-shadow: 0px 0px 5px 0px #000000; 
+    box-shadow: 0px 0px 5px 0px black;
 }
 .buttons{
     margin-left: 30%;
 }
 .card{
-    margin-top: 10%;
+    margin-top: 5%;
 }
 select {
     margin-top: 10%;
-}
-.jumbotron{
-    -webkit-box-shadow: 0px 0px 5px 0px #000000; 
-    box-shadow: 0px 0px 5px 0px black;
 }
 
 </style>
@@ -25,9 +23,46 @@ select {
 {% endblock %}
 
 {% block body %}
-<div class="container costum-div">
+<div class="container ">
     <div class="jumbotron costum-div">
-        <form method="POST">
+        <div>
+            <table class="table table-dark table-stripped">
+                <thead>
+                    <tr>
+                        <th scope="col">Products</th>
+                        <th scope="col">Amount</th>
+                        <th scope="col">Price</th>
+                    </tr>
+                </thead>
+                {% for article in articles %}
+                <tr>
+                    <td>{{article[1]}}</td>
+                    <td>{{article[3]}}</td>
+                    <td>{{article[2]}} :-</td>
+                </tr>
+                {% endfor %}
+            </table>
+        </div>
+
+        {% with messages = get_flashed_messages(category_filter=["error"]) %}
+            {% if messages %}
+                {% for msg in messages %}
+                    <div class="alert alert-danger" role="alert">
+                        {{msg}}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+        {% with messages = get_flashed_messages(category_filter=["success"]) %}
+            {% if messages %}
+                {% for msg in messages %}
+                    <div class="alert alert-success" role="alert">
+                        {{msg}}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+        <form method="POST" enctype="multipart/form-data">
             <div class="row">
                 <div class="col-xs">
                     <div class="form-group select-div container">
@@ -38,60 +73,91 @@ select {
                                  {% endfor %}
                             </select>
                         </label>
-                        
                     </div>
                 </div>
                 <div class="col">
                     <div class="buttons">
-                    <button class="btn btn-primary" type="button" data-toggle="collapse" data-target="#multiCollapseExample1" aria-expanded="false" aria-controls="multiCollapseExample2">Add products</button>
-                    <button class="btn btn-primary" type="button" data-toggle="collapse" data-target="#removeMoneyCollapse" aria-expanded="false" aria-controls="multiCollapseExample2">Remove products</button>
-                </div>
+                        <button class="btn btn-primary" type="button" data-toggle="collapse" data-target="#multiCollapseExample1"   aria-expanded="false" aria-controls="multiCollapseExample2">Restock</button>
+                        <button class="btn btn-primary" type="button" data-toggle="collapse" data-target="#removeMoneyCollapse"     aria-expanded="false" aria-controls="multiCollapseExample2">Remove</button>
+                        <button class="btn btn-primary" type="button" data-toggle="collapse" data-target="#changePrice"             aria-expanded="false" aria-controls="multiCollapseExample2">Change price</button>
+                    </div>
                     <div class="row">
                         <div class="col">
                             <div class="collapse multi-collapse" id="multiCollapseExample1">
-                              <div class="card jumbotron">
-                                <div class="form-group">
-                                    <label for="SelecAmount" class="lead">Enter the amount to add</label>
-                                    <input type="text" class="form-control" name="addAmount">
-                                </div>
-                                  <button type="submit" class="btn btn-primary" name="submitAdd" value="submitAdd">Submit</button>
-                                
-                              </div>
-                            </div>
-                          </div>
-                          <div class="col">
-                              <div class="collapse multi-collapse" id="removeMoneyCollapse">
-                                    <div class="card jumbotron">
-                                        <div class="form-group">
-                                            <label for="RemoveMoney" class="lead">Enter the amount to remove</label>
-                                            <input type="text" class="form-control"  name="removeAmount">
-                                        </div>
-                                        <button type="submit" class="btn btn-primary" name="submitRemove" value="submitRemove">Submit</button>
+                                <div class="card jumbotron">
+                                    <div class="form-group">
+                                        <label for="SelecAmount" class="lead">Amount to add</label>
+                                        <input type="text" class="form-control" name="addAmount">
                                     </div>
-                              </div>
-                          </div>
+                                    <button type="submit" class="btn btn-primary" name="submitAdd" value="submitAdd">Submit</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col">
+                            <div class="collapse multi-collapse" id="removeMoneyCollapse">
+                                <div class="card jumbotron">
+                                    <div class="form-group">
+                                        <label for="RemoveMoney" class="lead">Amount to remove</label>
+                                        <input type="text" class="form-control"  name="removeAmount">
+                                    </div>
+                                    <button type="submit" class="btn btn-primary" name="submitRemove" value="submitRemove">Submit</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col">
+                            <div class="collapse multi-collapse" id="changePrice">
+                                <div class="card jumbotron">
+                                    <div class="form-group">
+                                        <label for="RemoveMoney" class="lead">New price</label>
+                                        <input type="text" class="form-control"  name="changePrice">
+                                    </div>
+                                    <button type="submit" class="btn btn-primary" name="submitPrice" value="submitPrice">Submit</button>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                    
                 </div>
             </div>
-            <div>
-                <table class="table table-dark table-stripped">
-                    <thead>
-                        <tr>
-                            <th scope="col">Products</th>
-                            <th scope="col">Amount</th>
-                        </tr>
-                    </thead>
-                    {% for article in articles %}
-                    <tr>
-                        <td>{{article[1]}}</td>
-                        <td>{{article[3]}}</td>
-                    </tr>
-                    {% endfor %}
-                </table>
+            <div class="row">
+                <div class="col">
+                    <div class="buttons">
+                        <button type="button" class="btn btn-primary" data-toggle="collapse" data-target="#addProductCollapse" aria-expanded="false" aria-controls="multiCollapseExample2">Add a new product</button>
+                    </div>
+                
+                    <div class="col">
+                        <div class="collapse multi-collapse" id="addProductCollapse">
+                            <div class="card jumbotron">
+                                <div class="form-group">
+                                    <label for="articleName" class="lead">Article name</label>
+                                    <input type="text" class="form-control" name="articleName" id="articleName">
+                                </div>
+                                <div class="form-group">
+                                    <label for="articlePrice" class="lead">Article price</label>
+                                    <input type="text" class="form-control" name="articlePrice" id="articlePrice">
+                                </div>
+                                <div class="form-group">
+                                    <label for="articleStock" class="lead">Article stock</label>
+                                    <input type="text" class="form-control" name="articleStock" id="articleStock">
+                                </div>
+                                <div class="form-group">
+                                    <label for="articleInfo">Article information</label>
+                                    <textarea name="articleInfo" id="articleInfo" class="form-control" rows="3"></textarea>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label" for="customFile">Choose image for the product</label>
+                                    <input type="file" class="form-control-sm" id="customFile" name="inputFile" />
+                                </div>
+                                <button type="submit" class="btn btn-primary" name="submitAddProduct" value="submitAdd">Add new article</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
-           
+
         </form>
+            
+           
+        
     </div>
 </div>
 

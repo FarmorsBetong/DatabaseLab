@@ -51,7 +51,7 @@
                 </form>
               </div>
               <div class="col-6">
-                <img class="pic img-thumbnail" src={{"../static/images/ITEM_" + item[0]|string + ".jpg"}}>
+                <img class="img-thumbnail" src={{"../static/images/articles/" + item[5]|string}}>
               </div>
           </div>
         </div>
@@ -76,7 +76,7 @@
       </ol>
       <div class="carousel-inner">
         <div class="carousel-item active">
-          <img src="../static/images/ITEM_1.jpg" class="d-block w-100" alt="...">
+          <img src="../static/images/articles/ITEM_1.jpg" class="d-block w-100" alt="...">
           <div class="carousel-caption d-none d-md-block">
             <h5>{{items[0][1]}}</h5>
             <p>{{items[0][4]}}</p>
@@ -84,20 +84,13 @@
         </div>
         {% for carItem in items[1:] %}
             <div class="carousel-item">
-              <img src={{"../static/images/ITEM_" + carItem[0]|string + ".jpg"}} class="d-block w-100 img-thumbnail" alt="...">
+              <img src={{"../static/images/articles/" + carItem[5]|string}} class="d-block w-100 img-thumbnail" alt="..." width="300px" height="300px">
               <div class="carousel-caption d-none d-md-block">
                 <h5>{{carItem[1]}}</h5>
                 <p>{{carItem[4]}}</p>
               </div>
             </div>
         {% endfor %}
-        <div class="carousel-item">
-          <img src="../static/images/ITEM_3.jpg" class="d-block w-100" alt="...">
-          <div class="carousel-caption d-none d-md-block">
-            <h5>Third slide label</h5>
-            <p>Praesent commodo cursus magna, vel scelerisque nisl consectetur.</p>
-          </div>
-        </div>
       </div>
       <a class="carousel-control-prev" href="#carouselExampleCaptions" role="button" data-slide="prev">
         <span class="carousel-control-prev-icon" aria-hidden="true"></span>
