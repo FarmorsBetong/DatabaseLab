@@ -49,7 +49,15 @@
             </div>
         </form>
         <hr class="my-4">
-
+        {% with messages = get_flashed_messages(category_filter=["error"]) %}
+            {% if messages %}
+                {% for msg in messages %}
+                    <div class="alert alert-danger" role="alert">
+                        {{msg}}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
         <form method = "POST">
             <div class="input-group mb-3">
                 <div class="input-group-prepend">

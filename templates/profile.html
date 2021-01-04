@@ -14,14 +14,13 @@
 }
 .img-div{
     margin-top: 70px;
-    background-color: black;
 }
 .img-div > img {
   width: 100%;
   height: 100%;
 }
 
-a,button {
+.changeButtons {
   margin-top: 20px;
 }
 
@@ -35,7 +34,7 @@ a,button {
   margin-top: 3%;
 }
 
-@media screen and (max-width: 900px){
+@media screen and (max-width: 970px){
         .img-div{
           width: 150px;
           height: 150px;
@@ -43,7 +42,7 @@ a,button {
         }
 
         th,td {
-            font-size: 6px;
+            font-size: 0.7rem;
         }
         h1{
             font-size: 20px;
@@ -56,6 +55,11 @@ a,button {
         }
     }
 
+    @media screen and (max-width: 830px) {
+      .addMoney {
+        margin-top:10px;
+      } 
+    }
 </style>
 {% endblock %}
 
@@ -110,11 +114,11 @@ a,button {
               </table>
         </div>
     </div>
-    <div class="container">
+    <div class="container changeButtons">
       <p>
         <a class="btn btn-primary" data-toggle="collapse" href="#multiCollapseExample1" role="button" aria-expanded="false" aria-controls="multiCollapseExample1">Change user information</a>
         <button class="btn btn-primary" type="button" data-toggle="collapse" data-target="#multiCollapseExample2" aria-expanded="false" aria-controls="multiCollapseExample2">Change password</button>
-        <button class="btn btn-primary" type="button" data-toggle="collapse" data-target="#addMoney" aria-expanded="false" aria-controls="addMoney" >Add Money</button>
+        <button class="btn btn-primary addMoney" type="button" data-toggle="collapse" data-target="#addMoney" aria-expanded="false" aria-controls="addMoney" >Add Money</button>
       </p>
       <div class="row">
         <div class="col">
@@ -184,7 +188,7 @@ a,button {
       {% with messages = get_flashed_messages() %}
                 {% if messages %}
                   {% for msg in messages %}
-                    <div class="alert alert-info" role="alert">
+                    <div class="alert alert-danger" role="alert">
                       {{msg}}
                     </div>
                   {% endfor %}
