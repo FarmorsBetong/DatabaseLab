@@ -513,6 +513,7 @@ def profile():
     conn.commit()
     userinfo = cur.fetchone()
     cur.close()
+    print(userinfo)
     return render_template('profile.html', userInfo = userinfo)
 
 

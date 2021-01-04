@@ -68,10 +68,10 @@
 <div class="costum-container jumbotron">
     <div class="container row">
         <div class="col-s img-div">
-            {% if userInfo[4] %}
-            <img src={{"../static/images/userImages/" + userInfo[4]|string}} alt="" width="350px" class="userIcon">
-            {% else %}
+            {% if userInfo[4] == "NULL" %}
             <img src="../static/images/userImages/userIcon.png" alt="" width="400px" class="userIcon">
+            {% else %}
+            <img src={{"../static/images/userImages/" + userInfo[4]|string}} alt="" width="350px" class="userIcon">
             {% endif %}
         </div>
         <div class="col info-container">
